@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { DEFAULT_ENVIRONMENT, newProject, newTextObject } from './project';
+import { blankProject, DEFAULT_ENVIRONMENT, newProject, newTextObject } from './project';
 import { ProjectFileError, parseProject, serializeProject } from './schema';
 
 describe('project files', () => {
@@ -122,5 +122,21 @@ describe('text overlays and cursor options', () => {
       (parseProject(serializeProject(newProject())).objects.find((o) => o.kind === 'cursor') as typeof cursor)
         .fixedScreenSize,
     ).toBeUndefined();
+  });
+
+  it('allows a blank browser card with no address', () => {
+    const parsed = parseProject(serializeProject(blankProject()));
+    const website = parsed.objects.find((o) => o.kind === 'website');
+    expect(website && website.kind === 'website' && website.url).toBe('');
+    // It is still a real panel with its cursor.
+    expect(parsed.objects.filter((o) => o.kind === 'cursor')).toHaveLength(1);
+  });
+
+  it('still rejects a malformed address', () => {
+    const p = newProject();
+    const website = p.objects.find((o) => o.kind === 'website')!;
+    if (website.kind !== 'website') throw new Error();
+    website.url = 'javascript:alert(1)';
+    expect(() => parseProject(serializeProject(p))).toThrow('only http and https');
   });
 });

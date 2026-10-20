@@ -122,7 +122,6 @@ function WebsiteProps({ obj, time }: { obj: WebsiteObject; time: number }) {
   const vpKey = `${obj.viewport.width}x${obj.viewport.height}`;
   return (
     <>
-      <TransformSection obj={obj} time={time} />
       <Section title="Website Panel">
         <Row label="URL">
           <div className="url-row">
@@ -131,7 +130,14 @@ function WebsiteProps({ obj, time }: { obj: WebsiteObject; time: number }) {
               placeholder="https://example.com"
               onCommit={(raw) => {
                 let url = raw.trim();
-                if (url && !/^[a-z]+:\/\//i.test(url)) url = `https://${url}`;
+                if (url === '') {
+                  // Back to a blank card: no page, just the browser window.
+                  editObject<'website'>(obj.id, (o) => {
+                    o.url = '';
+                  });
+                  return;
+                }
+                if (!/^[a-z]+:\/\//i.test(url)) url = `https://${url}`;
                 try {
                   const { protocol } = new URL(url);
                   if (protocol !== 'http:' && protocol !== 'https:') return;
@@ -259,6 +265,8 @@ function WebsiteProps({ obj, time }: { obj: WebsiteObject; time: number }) {
         </Row>
       </Section>
       <WindowSection obj={obj} />
+      {/* Last, so the address and page settings are what a new panel shows first. */}
+      <TransformSection obj={obj} time={time} />
     </>
   );
 }

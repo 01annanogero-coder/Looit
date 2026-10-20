@@ -99,8 +99,21 @@ function syncPreview(reload = false): void {
   const s = getEditor();
   if (s.exporting || s.tool === 'interact') return;
   const panels = websites(s.project);
-  window.looit.site.keep(panels.map((w) => w.id));
+  const live = panels.filter((w) => w.url !== '');
+  window.looit.site.keep(live.map((w) => w.id));
   for (const website of panels) {
+    if (!website.url) {
+      // A blank browser card: no page to load, and no frame left over from a
+      // website that used to be on this panel.
+      const stale = siteTextures.get(website.id);
+      if (stale) {
+        stale.texture?.dispose();
+        siteTextures.delete(website.id);
+      }
+      view.setWebsiteTexture(website.id, null);
+      view.pageUrls.delete(website.id);
+      continue;
+    }
     const cursor = cursorFor(s.project, website.id);
     const hover = cursor ? sample(cursor.position, s.time) : null;
     window.looit.site.sync({

@@ -7,7 +7,7 @@
 
 import fs from 'node:fs/promises';
 import path from 'node:path';
-import { newId, newProject } from '../engine/project';
+import { blankProject, newId, newProject } from '../engine/project';
 import { parseProject, ProjectFileError, serializeProject } from '../engine/schema';
 import type { LibraryEntry, LibrarySnapshot, OpenedLibraryProject } from '../shared/ipc';
 
@@ -177,7 +177,7 @@ export class Library {
       await fs.mkdir(this.deps.folder, { recursive: true });
       const file = uniqueFileName(name, await this.takenNames());
       const target = path.join(this.deps.folder, file);
-      const project = newProject();
+      const project = blankProject();
       project.name = name;
       await this.write(target, project);
       const entry: StoredEntry = {

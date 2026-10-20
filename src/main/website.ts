@@ -19,6 +19,7 @@ import type {
   SiteFrame,
   SiteStatus,
 } from '../shared/ipc';
+import { frameCount } from '../engine/animation';
 import { websites, type Project, type SpecialKey } from '../engine/project';
 import { ExportSession } from './export-session';
 import { InputQueue } from './input-queue';
@@ -722,8 +723,13 @@ export class WebsiteHost {
       process.env.LOOIT_EXPORT_REUSE !== undefined
         ? process.env.LOOIT_EXPORT_REUSE === '1'
         : project.output.skipUnchangedFrames !== false;
-    const ids = websites(project).map((x) => x.id);
-    if (ids.length === 0) throw new Error('Add a website panel before exporting.');
+    const panels = websites(project);
+    if (panels.length === 0) throw new Error('Add a website panel before exporting.');
+    // Blank browser cards have no page to render; the export shows the card itself.
+    const ids = panels.filter((x) => x.url !== '').map((x) => x.id);
+    if (ids.length === 0) {
+      return { totalFrames: frameCount(project.duration, project.output.fps), websiteIds: [], workers: 1 };
+    }
     // Fresh pages per export, so every export starts from the same state and
     // the live preview is never disturbed.
     for (const websiteId of ids) {

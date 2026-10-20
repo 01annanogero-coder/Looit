@@ -57,13 +57,13 @@ const MAX_PROJECT_BYTES = 20 * 1024 * 1024;
 const MAX_IMAGE_BYTES = 8 * 1024 * 1024;
 
 let libraryInstance: Library | null = null;
-/** The onboarding project library: files in Documents/Looit plus a small index. */
+/** The onboarding project library: files in the user's home folder, never in a synced OneDrive folder. */
 function library(): Library {
   // Development only: automated tests of the onboarding screen use a scratch folder.
   const testDir = !app.isPackaged ? process.env.LOOIT_LIBRARY_DIR : undefined;
   libraryInstance ??= new Library({
     indexFile: testDir ? path.join(testDir, 'projects.json') : path.join(app.getPath('userData'), 'projects.json'),
-    folder: testDir ?? path.join(app.getPath('documents'), 'Looit'),
+    folder: testDir ?? path.join(app.getPath('home'), 'Looit Projects'),
     trash: (file) => shell.trashItem(file),
   });
   return libraryInstance;

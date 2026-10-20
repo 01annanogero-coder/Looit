@@ -368,6 +368,54 @@ export function newTextObject(text = 'Your headline'): TextObject {
   };
 }
 
+/**
+ * The starting point for a new video: one empty browser card facing the camera,
+ * with a resting cursor and no animation. The user points the panel at a site
+ * from its URL field; the demo project is the one that starts on electronjs.org.
+ */
+export function blankProject(): Project {
+  const websiteId = newId('website');
+  return {
+    format: PROJECT_FORMAT,
+    version: PROJECT_VERSION,
+    name: 'Untitled project',
+    duration: 10,
+    output: { width: 1280, height: 720, fps: 30 },
+    background: '#1b1f2a',
+    objects: [
+      newCamera(),
+      {
+        id: websiteId,
+        kind: 'website',
+        name: 'Website Panel',
+        visible: true,
+        url: '',
+        viewport: { width: 1280, height: 720 },
+        interactive: true,
+        shadow: { enabled: true, color: '#000000', opacity: 0.5, blur: 1.2, offsetY: -0.35 },
+        frame: 'light',
+        cornerRadius: 14,
+        border: { width: 0, color: '#ffffff' },
+        transform: defaultTransform(),
+      },
+      {
+        id: newId('cursor'),
+        kind: 'cursor',
+        name: 'Cursor',
+        visible: true,
+        targetId: websiteId,
+        size: 0.55,
+        style: 'arrow',
+        clickColor: '#3b82f6',
+        position: staticValue<Vec2>([640, 360]),
+        clicks: [],
+        scrolls: [],
+        keys: [],
+      },
+    ],
+  };
+}
+
 /** A new project with a website panel that flies in and a cursor that clicks. */
 export function newProject(url = 'https://www.electronjs.org/'): Project {
   const websiteId = newId('website');

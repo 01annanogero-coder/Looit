@@ -103,8 +103,31 @@ try {
     .then((t) => JSON.parse(t))
     .catch(() => null);
   check('the file exists and holds the project', onDisk?.name === 'Onboarding test', onDisk?.name);
+  const blankUrl = await ed.ev(
+    `(() => { const w = window.__looitEditor.getState().project.objects.find(o => o.kind === 'website'); return w && w.url; })()`,
+  );
+  check('a new project starts as a blank browser card', blankUrl === '', String(blankUrl));
 
-  // 2. Editing autosaves: add a text object and wait for the file to change.
+  // 2. Point the card at a website from the Inspector.
+  await ed.ev(`(() => {
+    const input = document.querySelector('.url-row input');
+    input.focus();
+    const setter = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value').set;
+    setter.call(input, 'example.com');
+    input.dispatchEvent(new Event('input', { bubbles: true }));
+    input.blur();
+  })()`);
+  await sleep(900);
+  const liveUrl = await ed.ev(
+    `(() => { const w = window.__looitEditor.getState().project.objects.find(o => o.kind === 'website'); return w && w.url; })()`,
+  );
+  check(
+    'typing an address points the panel at a site',
+    /^https:\/\/example\.com\/?$/.test(String(liveUrl)),
+    String(liveUrl),
+  );
+
+  // 3. Editing autosaves: add a text object and wait for the file to change.
   const before = onDisk.objects.length;
   await ed.ev(clickByText('.rail-btn', 'Text'));
   await sleep(1400);

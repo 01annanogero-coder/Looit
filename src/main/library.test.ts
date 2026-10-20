@@ -59,7 +59,10 @@ describe('Library', () => {
     expect(stat.isFile()).toBe(true);
     const parsed = parseProject(opened.text);
     expect(parsed.name).toBe('My tour');
-    expect(parsed.objects.some((o) => o.kind === 'website' && o.url.includes('electronjs.org'))).toBe(true);
+    // A new project starts as a blank browser card, not the demo site.
+    const website = parsed.objects.find((o) => o.kind === 'website');
+    expect(website && website.kind === 'website' && website.url).toBe('');
+    expect(parsed.objects.some((o) => o.kind === 'cursor')).toBe(true);
 
     const snapshot = await lib.snapshot();
     expect(snapshot.entries.map((e) => e.name)).toEqual(['My tour']);

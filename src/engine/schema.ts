@@ -133,6 +133,8 @@ function panelBorder(v: unknown, path: Path): PanelBorder {
 
 function websiteUrl(v: unknown, path: Path, allowFile: boolean): string {
   const s = str(v, path, 4096);
+  // An empty address is a blank browser card, waiting for the user to pick a site.
+  if (s === '') return s;
   try {
     const { protocol } = new URL(s);
     if (protocol !== 'http:' && protocol !== 'https:' && !(allowFile && protocol === 'file:'))
