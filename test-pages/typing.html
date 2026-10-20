@@ -1,0 +1,82 @@
+<!doctype html>
+<!--
+  Typing test page: a search box centred where the self-test cursor clicks
+  (640, 300). Suggestions filter on every keystroke (input event) and Enter
+  shows the submitted query, so typed characters and key presses are visible.
+-->
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>Looit typing test</title>
+    <style>
+      body {
+        margin: 0;
+        height: 720px;
+        font:
+          24px/1.4 'Segoe UI',
+          sans-serif;
+        background: #f1f5f9;
+        color: #0f172a;
+      }
+      form {
+        position: absolute;
+        left: 440px;
+        top: 270px;
+        width: 400px;
+      }
+      input {
+        width: 100%;
+        box-sizing: border-box;
+        height: 60px;
+        padding: 0 16px;
+        font: inherit;
+        border: 3px solid #334155;
+        border-radius: 12px;
+        outline: none;
+      }
+      input:focus {
+        border-color: #6366f1;
+      }
+      ul {
+        margin: 8px 0 0;
+        padding: 0;
+        list-style: none;
+      }
+      li {
+        padding: 4px 16px;
+      }
+      #result {
+        position: absolute;
+        left: 440px;
+        top: 160px;
+        font-weight: 600;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="result"></div>
+    <form id="form">
+      <input id="q" placeholder="Search…" autocomplete="off" />
+      <ul id="list"></ul>
+    </form>
+    <script>
+      const words = ['looit', 'lookup', 'loop', 'electron', 'chromium', 'timeline'];
+      const q = document.getElementById('q');
+      const list = document.getElementById('list');
+      const render = () => {
+        const v = q.value.toLowerCase();
+        list.innerHTML = v
+          ? words
+              .filter((w) => w.startsWith(v))
+              .map((w) => `<li>${w}</li>`)
+              .join('')
+          : '';
+      };
+      q.addEventListener('input', render);
+      document.getElementById('form').addEventListener('submit', (e) => {
+        e.preventDefault();
+        document.getElementById('result').textContent = 'Searched: ' + q.value;
+      });
+    </script>
+  </body>
+</html>

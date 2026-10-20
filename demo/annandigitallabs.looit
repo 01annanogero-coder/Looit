@@ -1,0 +1,486 @@
+{
+  "format": "looit-project",
+  "version": 1,
+  "name": "Annan Digital Labs tour",
+  "duration": 24,
+  "output": {
+    "width": 1280,
+    "height": 720,
+    "fps": 30
+  },
+  "background": "#0f172a",
+  "environment": {
+    "background": "gradient",
+    "gradientTo": "#1e3a5f",
+    "gradientAngle": 90,
+    "image": null,
+    "floor": "reflection",
+    "floorY": -5.2,
+    "floorColor": "#111827"
+  },
+  "objects": [
+    {
+      "id": "camera-main",
+      "kind": "camera",
+      "name": "Camera",
+      "visible": true,
+      "position": {
+        "value": [
+          0,
+          0,
+          18
+        ],
+        "keyframes": []
+      },
+      "target": {
+        "value": [
+          0,
+          0,
+          0
+        ],
+        "keyframes": [
+          {
+            "id": "k-1",
+            "time": 2.2,
+            "value": [
+              0,
+              0,
+              0
+            ],
+            "easing": "easeInOut"
+          },
+          {
+            "id": "k-2",
+            "time": 3,
+            "value": [
+              0,
+              1,
+              0
+            ],
+            "easing": "easeInOut"
+          },
+          {
+            "id": "k-3",
+            "time": 10.4,
+            "value": [
+              0,
+              1,
+              0
+            ],
+            "easing": "easeInOut"
+          },
+          {
+            "id": "k-4",
+            "time": 11.4,
+            "value": [
+              0,
+              0,
+              0
+            ]
+          }
+        ]
+      },
+      "zoom": {
+        "value": 1,
+        "keyframes": [
+          {
+            "id": "k-5",
+            "time": 2.2,
+            "value": 1,
+            "easing": "easeInOut"
+          },
+          {
+            "id": "k-6",
+            "time": 3,
+            "value": 1.25,
+            "easing": "easeInOut"
+          },
+          {
+            "id": "k-7",
+            "time": 10.4,
+            "value": 1.25,
+            "easing": "easeInOut"
+          },
+          {
+            "id": "k-8",
+            "time": 11.4,
+            "value": 1,
+            "easing": "easeInOut"
+          },
+          {
+            "id": "k-9",
+            "time": 22.5,
+            "value": 1,
+            "easing": "easeInOut"
+          },
+          {
+            "id": "k-10",
+            "time": 24,
+            "value": 1.08
+          }
+        ]
+      }
+    },
+    {
+      "id": "website-annan",
+      "kind": "website",
+      "name": "Annan Digital Labs",
+      "visible": true,
+      "url": "https://annandigitallabs.com/",
+      "viewport": {
+        "width": 1280,
+        "height": 720
+      },
+      "interactive": true,
+      "shadow": {
+        "enabled": true,
+        "color": "#000000",
+        "opacity": 0.55,
+        "blur": 1.2,
+        "offsetY": -0.35
+      },
+      "frame": "light",
+      "cornerRadius": 14,
+      "border": {
+        "width": 0,
+        "color": "#ffffff"
+      },
+      "transform": {
+        "position": {
+          "value": [
+            -3,
+            -1.5,
+            -10
+          ],
+          "keyframes": [
+            {
+              "id": "k-11",
+              "time": 0,
+              "value": [
+                -3,
+                -1.5,
+                -10
+              ],
+              "easing": "easeInOut"
+            },
+            {
+              "id": "k-12",
+              "time": 2,
+              "value": [
+                0,
+                0,
+                0
+              ]
+            }
+          ]
+        },
+        "rotation": {
+          "value": [
+            12,
+            35,
+            -6
+          ],
+          "keyframes": [
+            {
+              "id": "k-13",
+              "time": 0,
+              "value": [
+                12,
+                35,
+                -6
+              ],
+              "easing": "easeInOut"
+            },
+            {
+              "id": "k-14",
+              "time": 2,
+              "value": [
+                0,
+                0,
+                0
+              ]
+            }
+          ]
+        },
+        "scale": {
+          "value": [
+            0.6,
+            0.6,
+            0.6
+          ],
+          "keyframes": [
+            {
+              "id": "k-15",
+              "time": 0,
+              "value": [
+                0.6,
+                0.6,
+                0.6
+              ],
+              "easing": "easeOut"
+            },
+            {
+              "id": "k-16",
+              "time": 2,
+              "value": [
+                1,
+                1,
+                1
+              ]
+            }
+          ]
+        },
+        "opacity": {
+          "value": 0,
+          "keyframes": [
+            {
+              "id": "k-17",
+              "time": 0,
+              "value": 0,
+              "easing": "easeInOut"
+            },
+            {
+              "id": "k-18",
+              "time": 0.6,
+              "value": 1
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "cursor-annan",
+      "kind": "cursor",
+      "name": "Cursor",
+      "visible": true,
+      "targetId": "website-annan",
+      "size": 0.55,
+      "style": "arrow",
+      "clickColor": "#3b82f6",
+      "position": {
+        "value": [
+          1150,
+          640
+        ],
+        "keyframes": [
+          {
+            "id": "k-19",
+            "time": 0,
+            "value": [
+              1150,
+              640
+            ],
+            "easing": "easeInOut"
+          },
+          {
+            "id": "k-20",
+            "time": 1.8,
+            "value": [
+              760,
+              380
+            ],
+            "easing": "easeInOut"
+          },
+          {
+            "id": "k-21",
+            "time": 2.8,
+            "value": [
+              428,
+              90
+            ],
+            "easing": "easeInOut"
+          },
+          {
+            "id": "k-22",
+            "time": 3.9,
+            "value": [
+              428,
+              90
+            ],
+            "easing": "easeInOut"
+          },
+          {
+            "id": "k-23",
+            "time": 4.5,
+            "value": [
+              546,
+              90
+            ],
+            "easing": "easeInOut"
+          },
+          {
+            "id": "k-24",
+            "time": 5.6,
+            "value": [
+              546,
+              90
+            ],
+            "easing": "easeInOut"
+          },
+          {
+            "id": "k-25",
+            "time": 6.2,
+            "value": [
+              668,
+              90
+            ],
+            "easing": "easeInOut"
+          },
+          {
+            "id": "k-26",
+            "time": 6.9,
+            "value": [
+              668,
+              90
+            ],
+            "easing": "easeInOut"
+          },
+          {
+            "id": "k-27",
+            "time": 7.4,
+            "value": [
+              668,
+              215
+            ],
+            "easing": "easeInOut"
+          },
+          {
+            "id": "k-28",
+            "time": 8,
+            "value": [
+              428,
+              273
+            ],
+            "easing": "easeInOut"
+          },
+          {
+            "id": "k-29",
+            "time": 8.6,
+            "value": [
+              428,
+              273
+            ],
+            "easing": "easeInOut"
+          },
+          {
+            "id": "k-30",
+            "time": 9.4,
+            "value": [
+              793,
+              90
+            ],
+            "easing": "easeInOut"
+          },
+          {
+            "id": "k-31",
+            "time": 10.3,
+            "value": [
+              793,
+              90
+            ],
+            "easing": "easeInOut"
+          },
+          {
+            "id": "k-32",
+            "time": 11,
+            "value": [
+              420,
+              520
+            ],
+            "easing": "easeInOut"
+          },
+          {
+            "id": "k-33",
+            "time": 16.8,
+            "value": [
+              420,
+              520
+            ],
+            "easing": "easeInOut"
+          },
+          {
+            "id": "k-34",
+            "time": 17.8,
+            "value": [
+              793,
+              90
+            ],
+            "easing": "easeInOut"
+          },
+          {
+            "id": "k-35",
+            "time": 18.6,
+            "value": [
+              793,
+              90
+            ],
+            "easing": "easeInOut"
+          },
+          {
+            "id": "k-36",
+            "time": 19.6,
+            "value": [
+              420,
+              520
+            ],
+            "easing": "easeInOut"
+          }
+        ]
+      },
+      "clicks": [
+        {
+          "id": "click-37",
+          "time": 18.3
+        }
+      ],
+      "scrolls": [
+        {
+          "id": "scroll-38",
+          "time": 11.6,
+          "deltaY": 700
+        },
+        {
+          "id": "scroll-39",
+          "time": 12.4,
+          "deltaY": 700
+        },
+        {
+          "id": "scroll-40",
+          "time": 13.2,
+          "deltaY": 700
+        },
+        {
+          "id": "scroll-41",
+          "time": 14,
+          "deltaY": 700
+        },
+        {
+          "id": "scroll-42",
+          "time": 15.2,
+          "deltaY": -1400
+        },
+        {
+          "id": "scroll-43",
+          "time": 15.8,
+          "deltaY": -1400
+        },
+        {
+          "id": "scroll-44",
+          "time": 20.4,
+          "deltaY": 600
+        },
+        {
+          "id": "scroll-45",
+          "time": 21.4,
+          "deltaY": 600
+        },
+        {
+          "id": "scroll-46",
+          "time": 22.4,
+          "deltaY": 600
+        }
+      ],
+      "keys": []
+    }
+  ]
+}

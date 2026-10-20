@@ -1,0 +1,109 @@
+<!doctype html>
+<!--
+  Frame-reuse test page: mostly static, with changes that are easy to miss.
+  Every change must be captured; only truly unchanged frames may be reused.
+    1.5 s  text changes inside a web component's shadow DOM
+    2.5 s  a timer changes text in the main document
+    3.0 s  a timer starts a short CSS transition
+    4.0 s  the page scrolls itself with JavaScript (no user input)
+    1.2 s  an image is swapped for another of the same size (no layout change)
+    3.6 s  an SVG circle's radius attribute changes
+  Plus hover styles as the cursor moves across the button.
+-->
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>Looit frame-reuse test</title>
+    <style>
+      html,
+      body {
+        margin: 0;
+        font:
+          26px/1.4 'Segoe UI',
+          sans-serif;
+        color: #0f172a;
+      }
+      body {
+        height: 3000px;
+        background: linear-gradient(#f8fafc, #dbeafe);
+      }
+      h1 {
+        margin: 40px;
+      }
+      button {
+        position: absolute;
+        left: 540px;
+        top: 260px;
+        width: 200px;
+        height: 80px;
+        font: inherit;
+        background: #cbd5e1;
+        border: 3px solid #334155;
+        border-radius: 12px;
+      }
+      button:hover {
+        background: #fde68a;
+      }
+      .card {
+        position: absolute;
+        left: 900px;
+        top: 420px;
+        width: 260px;
+        height: 120px;
+        background: #6366f1;
+        border-radius: 16px;
+        transition: transform 0.4s ease-out;
+      }
+      .card.moved {
+        transform: translateX(-300px);
+      }
+      #status {
+        margin: 0 40px;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>A mostly static page</h1>
+    <p id="status">Waiting…</p>
+    <shadow-badge></shadow-badge>
+    <button>Hover me</button>
+    <div class="card" id="card"></div>
+    <img id="pic" alt="" style="position: absolute; left: 60px; top: 520px; width: 120px; height: 80px" />
+    <svg style="position: absolute; left: 260px; top: 520px" width="160" height="120">
+      <circle id="dot" cx="80" cy="60" r="20" fill="#ef4444" />
+    </svg>
+    <script>
+      customElements.define(
+        'shadow-badge',
+        class extends HTMLElement {
+          constructor() {
+            super();
+            const root = this.attachShadow({ mode: 'open' });
+            root.innerHTML =
+              '<style>span{position:absolute;left:40px;top:420px;padding:8px 16px;background:#0f172a;color:#fff;border-radius:8px}</style><span>Badge: off</span>';
+            setTimeout(() => (root.querySelector('span').textContent = 'Badge: ON'), 1500 - 1000);
+          }
+        },
+      );
+      // Times are page time; the export lets the page settle for 1 s first.
+      setTimeout(() => (document.getElementById('status').textContent = 'Timer fired: text changed'), 2500 - 1000);
+      setTimeout(() => document.getElementById('card').classList.add('moved'), 3000 - 1000);
+      setTimeout(() => window.scrollTo(0, 150), 4000 - 1000);
+      // Two same-size images drawn on the fly (data URLs, so no network).
+      const swatch = (color) => {
+        const c = document.createElement('canvas');
+        c.width = 120;
+        c.height = 80;
+        const g = c.getContext('2d');
+        g.fillStyle = color;
+        g.fillRect(0, 0, 120, 80);
+        return c.toDataURL();
+      };
+      const pic = document.getElementById('pic');
+      pic.src = swatch('#22c55e');
+      const second = swatch('#f97316');
+      setTimeout(() => (pic.src = second), 1200);
+      setTimeout(() => document.getElementById('dot').setAttribute('r', '50'), 3600 - 1000);
+    </script>
+  </body>
+</html>

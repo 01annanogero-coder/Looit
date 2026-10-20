@@ -1,0 +1,79 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>Smooth scroll test</title>
+    <style>
+      body {
+        margin: 0;
+        font:
+          20px/1.4 Consolas,
+          monospace;
+        background: repeating-linear-gradient(#f8fafc 0 200px, #e2e8f0 200px 400px);
+        height: 6000px;
+      }
+      #hud {
+        position: fixed;
+        top: 12px;
+        left: 12px;
+        padding: 10px 14px;
+        background: #0f172a;
+        color: #e2e8f0;
+        border-radius: 8px;
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Works like Lenis and similar smooth-scroll libraries: the wheel only
+         sets a target, and requestAnimationFrame eases the page towards it
+         using the time between frames. -->
+    <div id="hud">
+      <div>target <span id="target">0</span></div>
+      <div>scrollY <span id="y">0</span></div>
+      <!-- Open with #debug for timing details (these vary between runs). -->
+      <div id="debug" hidden>
+        <div>raf <span id="raf">0</span></div>
+        <div>raf dt <span id="dt">0</span> ms</div>
+        <div>raf time total <span id="sum">0</span> ms</div>
+        <div>perf <span id="perf">0</span> ms</div>
+        <div>raf <span id="native"></span></div>
+      </div>
+    </div>
+    <script>
+      let target = 0;
+      let current = 0;
+      let last = null;
+      let count = 0;
+      let sum = 0;
+      const $ = (id) => document.getElementById(id);
+      $('debug').hidden = location.hash !== '#debug';
+      window.addEventListener(
+        'wheel',
+        (e) => {
+          e.preventDefault();
+          target = Math.max(0, Math.min(target + e.deltaY, document.documentElement.scrollHeight - innerHeight));
+        },
+        { passive: false },
+      );
+      function frame(time) {
+        const dt = last === null ? 0 : time - last;
+        last = time;
+        sum += dt;
+        count++;
+        // Exponential damping, as in Lenis (lerp 0.1 at 60 fps).
+        current += (target - current) * (1 - Math.exp(-6 * (dt / 1000)));
+        if (Math.abs(target - current) < 0.5) current = target;
+        window.scrollTo(0, current);
+        $('raf').textContent = count;
+        $('dt').textContent = dt.toFixed(1);
+        $('target').textContent = target;
+        $('y').textContent = Math.round(scrollY);
+        $('sum').textContent = sum.toFixed(1);
+        $('perf').textContent = performance.now().toFixed(1);
+        $('native').textContent = String(requestAnimationFrame).includes('[native code]') ? 'native' : 'page clock';
+        requestAnimationFrame(frame);
+      }
+      requestAnimationFrame(frame);
+    </script>
+  </body>
+</html>
