@@ -2,11 +2,13 @@ import { Layers, MousePointer2, PanelLeft, PanelRight, Type } from 'lucide-react
 import { useEffect } from 'react';
 import { cursorFor } from '../engine/project';
 import { addText, cancelExport, useExportProgress } from './actions';
+import { useAutosave } from './autosave';
 import { resize, toggleLeft, toggleRight, toggleTimeline, useLayout } from './layout';
 import { useShortcuts } from './shortcuts';
 import { getEditor, isDirty, select, setEditor, useEditor } from './store';
 import { ExportPanel } from './ui/ExportPanel';
 import { Hierarchy } from './ui/Hierarchy';
+import { Home } from './ui/Home';
 import { Inspector } from './ui/Inspector';
 import { Splitter } from './ui/Splitter';
 import { Timeline, TIMELINE_HEADER_HEIGHT } from './ui/Timeline';
@@ -103,10 +105,14 @@ function StatusBar() {
 export function App() {
   useShortcuts();
   useDirtySync();
+  useAutosave();
   const layout = useLayout();
+  const view = useEditor((s) => s.view);
   const left = layout.leftOpen && !layout.maximized;
   const right = layout.rightOpen && !layout.maximized;
   const timeline = layout.timelineOpen && !layout.maximized;
+
+  if (view === 'home') return <Home />;
 
   return (
     <div

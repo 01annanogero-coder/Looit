@@ -29,6 +29,7 @@ import { parseProject } from '../engine/schema';
 import { RendererRpc } from './ai/renderer-rpc';
 import { AiService, Studio } from './ai/service';
 import { aiAccessEnabled, setAiAccessEnabled } from './ai/settings';
+import { Library } from './library';
 import { runBridge } from './mcp/bridge';
 import { isAllowedSiteUrl, WebsiteHost } from './website';
 
@@ -54,6 +55,19 @@ const approvedProjectPaths = new Set<string>();
 const MAX_PROJECT_BYTES = 20 * 1024 * 1024;
 /** Background images are embedded in the project (as base64), so keep them modest. */
 const MAX_IMAGE_BYTES = 8 * 1024 * 1024;
+
+let libraryInstance: Library | null = null;
+/** The onboarding project library: files in Documents/Looit plus a small index. */
+function library(): Library {
+  // Development only: automated tests of the onboarding screen use a scratch folder.
+  const testDir = !app.isPackaged ? process.env.LOOIT_LIBRARY_DIR : undefined;
+  libraryInstance ??= new Library({
+    indexFile: testDir ? path.join(testDir, 'projects.json') : path.join(app.getPath('userData'), 'projects.json'),
+    folder: testDir ?? path.join(app.getPath('documents'), 'Looit'),
+    trash: (file) => shell.trashItem(file),
+  });
+  return libraryInstance;
+}
 let exportFileCounter = 0;
 const exportFiles = new Map<number, { handle: FileHandle; temp: string; target: string; owner: Workspace['kind'] }>();
 /** Videos the AI Studio exported, playable in its window as looit-media://video/<token>. */
@@ -366,6 +380,67 @@ function registerIpc(): void {
   });
   on('project:dirty', (_ws, dirty: unknown) => {
     projectDirty = dirty === true;
+  });
+
+  // ---- The onboarding project library (editor only) ----
+  handle('library:list', () => library().snapshot());
+  handle('library:create', async (_ws, name: unknown) => {
+    if (typeof name !== 'string' || name.length > 200) throw new Error('Invalid project name.');
+    const opened = await library().create(name);
+    approvedProjectPaths.add(opened.entry.path);
+    return opened;
+  });
+  handle('library:demo', async () => {
+    const opened = await library().demo();
+    approvedProjectPaths.add(opened.entry.path);
+    return opened;
+  });
+  handle('library:open', async (_ws, id: unknown) => {
+    if (!validId(id)) throw new Error('Invalid project id.');
+    const opened = await library().open(id);
+    if (opened) approvedProjectPaths.add(opened.entry.path);
+    return opened;
+  });
+  handle('library:add', async (_ws, file: unknown, name: unknown) => {
+    if (typeof file !== 'string' || file.length > 4096) throw new Error('Invalid file path.');
+    if (!file.toLowerCase().endsWith('.looit')) throw new Error('That is not a .looit project.');
+    const entry = await library().add(file, typeof name === 'string' ? name : path.basename(file, '.looit'));
+    approvedProjectPaths.add(entry.path);
+    return entry;
+  });
+  handle('library:rename', async (_ws, id: unknown, name: unknown) => {
+    if (!validId(id) || typeof name !== 'string' || name.length > 200) throw new Error('Invalid rename.');
+    const entry = await library().rename(id, name);
+    approvedProjectPaths.add(entry.path);
+    return entry;
+  });
+  handle('library:set-pinned', async (_ws, id: unknown, pinned: unknown) => {
+    if (!validId(id) || typeof pinned !== 'boolean') throw new Error('Invalid pin request.');
+    await library().setPinned(id, pinned);
+  });
+  handle('library:remove', async (_ws, id: unknown) => {
+    if (!validId(id)) throw new Error('Invalid project id.');
+    await library().remove(id);
+  });
+  handle('library:share', async (ws, id: unknown) => {
+    if (!validId(id)) throw new Error('Invalid project id.');
+    const entry = await library().entry(id);
+    const result = await dialog.showSaveDialog(ws.window, {
+      title: 'Share a copy of the project',
+      defaultPath: path.join(app.getPath('downloads'), `${entry.name}.looit`),
+      filters: [{ name: 'Looit project', extensions: ['looit'] }],
+    });
+    if (result.canceled || !result.filePath) return null;
+    return library().copyTo(id, result.filePath);
+  });
+  handle('library:note-saved', async (_ws, file: unknown, name: unknown) => {
+    if (typeof file !== 'string' || typeof name !== 'string') return;
+    await library().noteSaved(file, name);
+  });
+  handle('library:reveal', async (_ws, id: unknown) => {
+    if (!validId(id)) throw new Error('Invalid project id.');
+    const entry = await library().entry(id);
+    if (entry.exists) shell.showItemInFolder(entry.path);
   });
 
   // ---- Self-test (development, editor only) ----

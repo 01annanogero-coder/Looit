@@ -16,6 +16,8 @@ export function isCursorEventProp(p: string): p is CursorEventProp {
 
 export type Tool = 'select' | 'interact' | 'cursor';
 export type GizmoMode = 'translate' | 'rotate' | 'scale';
+/** The onboarding screen (project library) or the editor. */
+export type View = 'home' | 'editor';
 
 /** A keyframe (or cursor event, prop 'clicks'/'scrolls') selected in the timeline. */
 export interface KeyRef {
@@ -34,6 +36,8 @@ interface EditorState {
   /** The project as last saved/opened, for the unsaved-changes indicator. */
   savedProject: Project;
   filePath: string | null;
+  /** Where the app starts after launch: the project library. */
+  view: View;
   selectedId: string | null;
   selectedKeys: KeyRef[];
   time: number;
@@ -57,6 +61,7 @@ export const useEditor = create<EditorState>(() => ({
   project: initial,
   savedProject: initial,
   filePath: null,
+  view: 'home',
   selectedId: initial.objects.find((o) => o.kind === 'website')?.id ?? null,
   selectedKeys: [],
   time: 0,
@@ -161,6 +166,7 @@ export function loadProject(project: Project, filePath: string | null): void {
     project,
     savedProject: project,
     filePath,
+    view: 'editor',
     selectedId: project.objects.find((o) => o.kind === 'website')?.id ?? null,
     selectedKeys: [],
     time: 0,
@@ -173,6 +179,11 @@ export function loadProject(project: Project, filePath: string | null): void {
 
 export function markSaved(filePath: string): void {
   set({ savedProject: get().project, filePath });
+}
+
+/** Shows the onboarding library or the editor. */
+export function setView(view: View): void {
+  set({ view });
 }
 
 export function isDirty(s: EditorState = get()): boolean {

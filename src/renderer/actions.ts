@@ -18,7 +18,6 @@ import {
   newId,
   newWebsiteWithCursor,
   websites,
-  newProject,
   newTextObject,
   sample,
   TRANSFORM_PROPS,
@@ -42,6 +41,7 @@ import {
   setPlaying,
   setStatus,
   setTime,
+  setView,
   isCursorEventProp,
   type KeyRef,
 } from './store';
@@ -59,8 +59,8 @@ function confirmDiscard(): boolean {
 }
 
 export function newFile(): void {
-  if (!confirmDiscard()) return;
-  loadProject(newProject(), null);
+  // Projects start on the onboarding screen, where they are named and get a file.
+  void goHome();
 }
 
 export async function openFile(): Promise<void> {
@@ -90,6 +90,47 @@ export async function saveFile(saveAs = false): Promise<boolean> {
     setStatus({ text: `Could not save: ${errorText(err)}`, error: true });
     return false;
   }
+}
+
+/** Writes run one at a time so two quick edits can't race on disk. */
+let saveChain: Promise<unknown> = Promise.resolve();
+
+/**
+ * Writes the open project to its file when it has one. Used by autosave after
+ * every change and before leaving the editor; the Save dialog is not involved.
+ */
+export function savePending(): Promise<boolean> {
+  const run = async (): Promise<boolean> => {
+    const s = getEditor();
+    if (!s.filePath || s.project === s.savedProject || s.exporting) return true;
+    const project = s.project;
+    try {
+      const saved = await window.looit.project.save(serializeProject(project), s.filePath, project.name);
+      if (!saved) return false;
+      // Only mark saved if nothing changed while the write was in flight.
+      if (getEditor().project === project) markSaved(saved);
+      else setEditor({ filePath: saved });
+      void window.looit.library.noteSaved(saved, project.name);
+      return true;
+    } catch (err) {
+      setStatus({ text: `Could not save: ${errorText(err)}`, error: true });
+      return false;
+    }
+  };
+  const next = saveChain.then(run, run);
+  saveChain = next.catch(() => undefined);
+  return next;
+}
+
+/** Back to the project library, saving the open project first. */
+export async function goHome(): Promise<void> {
+  await savePending();
+  setView('home');
+}
+
+/** Opens a project that came from the onboarding library. */
+export function openLibraryProject(text: string, path: string | null): void {
+  loadProject(parseProject(text), path);
 }
 
 /** Changes the scene environment (background and floor). */

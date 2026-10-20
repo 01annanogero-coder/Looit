@@ -148,6 +148,34 @@ export interface OpenedProject {
   text: string;
 }
 
+/** One project the onboarding screen offers to continue. */
+export interface LibraryEntry {
+  id: string;
+  name: string;
+  /** Absolute path of the .looit file. */
+  path: string;
+  pinned: boolean;
+  /** Epoch ms of the last open or save. */
+  updatedAt: number;
+  /** False when the file was moved or deleted outside Looit. */
+  exists: boolean;
+}
+
+/** Everything the onboarding screen shows. */
+export interface LibrarySnapshot {
+  /** Newest (and pinned) first; the demo project is not repeated here. */
+  entries: LibraryEntry[];
+  /** The bundled electronjs.org demo project, created on first use. */
+  demo: LibraryEntry | null;
+  /** Folder new projects are created in. */
+  folder: string;
+}
+
+export interface OpenedLibraryProject {
+  entry: LibraryEntry;
+  text: string;
+}
+
 export interface SelfTestConfig {
   url: string;
   /** A saved project to export instead of the built-in test scene (LOOIT_SELFTEST_PROJECT=path.looit). */
@@ -207,6 +235,29 @@ export interface LooitApi {
     setDirty(dirty: boolean): void;
     /** Asks for a PNG, JPEG or WebP background image; returns it as a data: URL, or null if cancelled. */
     pickImage(): Promise<string | null>;
+  };
+  library: {
+    /** The projects shown on the onboarding screen. */
+    list(): Promise<LibrarySnapshot>;
+    /** Creates a project in the library folder and returns it ready to edit. */
+    create(name: string): Promise<OpenedLibraryProject>;
+    /** Opens the demo project (electronjs.org), creating it on first use. */
+    demo(): Promise<OpenedLibraryProject>;
+    /** Reads one library project. */
+    open(id: string): Promise<OpenedLibraryProject | null>;
+    /** Registers a .looit file the user picked (so it appears in the list). */
+    add(path: string, name: string): Promise<LibraryEntry>;
+    /** Renames the project and its file. */
+    rename(id: string, name: string): Promise<LibraryEntry>;
+    setPinned(id: string, pinned: boolean): Promise<void>;
+    /** Moves the project file to the recycle bin and forgets it. */
+    remove(id: string): Promise<void>;
+    /** Saves a copy the user can send to someone else. Returns the new path, or null if cancelled. */
+    share(id: string): Promise<string | null>;
+    /** Updates the name and recency of an indexed project after a save. */
+    noteSaved(path: string, name: string): Promise<void>;
+    /** Shows the file in Explorer. */
+    reveal(id: string): Promise<void>;
   };
   ai: {
     /** Answers the main process's requests; also tells it the window is ready for them. */

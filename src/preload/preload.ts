@@ -35,6 +35,19 @@ const api: LooitApi = {
     setDirty: (dirty) => ipcRenderer.send('project:dirty', dirty),
     pickImage: () => ipcRenderer.invoke('project:pick-image'),
   },
+  library: {
+    list: () => ipcRenderer.invoke('library:list'),
+    create: (name) => ipcRenderer.invoke('library:create', name),
+    demo: () => ipcRenderer.invoke('library:demo'),
+    open: (id) => ipcRenderer.invoke('library:open', id),
+    add: (path, name) => ipcRenderer.invoke('library:add', path, name),
+    rename: (id, name) => ipcRenderer.invoke('library:rename', id, name),
+    setPinned: (id, pinned) => ipcRenderer.invoke('library:set-pinned', id, pinned),
+    remove: (id) => ipcRenderer.invoke('library:remove', id),
+    share: (id) => ipcRenderer.invoke('library:share', id),
+    noteSaved: (path, name) => ipcRenderer.invoke('library:note-saved', path, name),
+    reveal: (id) => ipcRenderer.invoke('library:reveal', id),
+  },
   ai: {
     onRequest: (handler) => {
       ipcRenderer.on('ai:request', (_e, req: AiRequest) => {

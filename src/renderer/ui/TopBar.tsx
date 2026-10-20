@@ -1,6 +1,6 @@
-import { Cloud, CloudOff, Film, Play, Square } from 'lucide-react';
+import { Cloud, CloudOff, Film, LayoutGrid, Play, Square } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
-import { addText, deleteSelection, newFile, openFile, runExport, saveFile } from '../actions';
+import { addText, deleteSelection, goHome, newFile, openFile, runExport, saveFile } from '../actions';
 import { SHORTCUTS, SHOW_SHORTCUTS_EVENT } from '../shortcuts';
 import { isDirty, redo, setPlaying, setTime, undo, useEditor } from '../store';
 import { AiConnectDialog } from './AiConnect';
@@ -107,6 +107,7 @@ export function TopBar() {
         <Menu
           label="File"
           items={[
+            { label: 'All projects', action: () => void goHome() },
             { label: 'New project', shortcut: 'Ctrl+N', action: newFile },
             { label: 'Open…', shortcut: 'Ctrl+O', action: () => void openFile() },
             { label: 'Save', shortcut: 'Ctrl+S', action: () => void saveFile() },
@@ -139,6 +140,9 @@ export function TopBar() {
         </span>
       </div>
       <div className="topbar-actions">
+        <button onClick={() => void goHome()} title="Back to your projects" disabled={exporting}>
+          <LayoutGrid size={14} /> Projects
+        </button>
         <button
           onClick={() => {
             if (playing) setPlaying(false);
