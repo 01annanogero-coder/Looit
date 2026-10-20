@@ -79,3 +79,48 @@ describe('camera and environment', () => {
     expect(() => parseProject(serializeProject(p))).toThrow('embedded PNG, JPEG or WebP');
   });
 });
+
+describe('text overlays and cursor options', () => {
+  it('round-trips screen text with a pill and a shadow', () => {
+    const p = newProject();
+    const text = newTextObject('HUD');
+    text.space = 'screen';
+    text.screen = { x: 0.5, y: 0.1 };
+    text.background = { color: '#000000', opacity: 0.6, padding: 0.4, radius: 0.5 };
+    text.shadow = { color: '#000000', opacity: 0.5, offsetX: 0, offsetY: 0.1, blur: 0.2 };
+    p.objects.push(text);
+    expect(parseProject(serializeProject(p)).objects.find((o) => o.id === text.id)).toEqual(text);
+  });
+
+  it('keeps old text files in world space', () => {
+    const p = newProject();
+    p.objects.push(newTextObject('Plain'));
+    const parsed = parseProject(serializeProject(p)).objects.find((o) => o.kind === 'text')!;
+    expect(parsed.kind === 'text' && parsed.space).toBeUndefined();
+  });
+
+  it('rejects an unknown space and a screen anchor outside 0..1', () => {
+    const p = newProject();
+    const text = newTextObject('HUD');
+    text.space = 'overlay' as never;
+    p.objects.push(text);
+    expect(() => parseProject(serializeProject(p))).toThrow('expected world or screen');
+    text.space = 'screen';
+    text.screen = { x: 2, y: 0.5 };
+    expect(() => parseProject(serializeProject(p))).toThrow('project.objects[3].screen.x');
+  });
+
+  it('keeps the optional fixed-size cursor flag', () => {
+    const p = newProject();
+    const cursor = p.objects.find((o) => o.kind === 'cursor')!;
+    if (cursor.kind !== 'cursor') throw new Error();
+    cursor.fixedScreenSize = true;
+    expect(
+      (parseProject(serializeProject(p)).objects.find((o) => o.kind === 'cursor') as typeof cursor).fixedScreenSize,
+    ).toBe(true);
+    expect(
+      (parseProject(serializeProject(newProject())).objects.find((o) => o.kind === 'cursor') as typeof cursor)
+        .fixedScreenSize,
+    ).toBeUndefined();
+  });
+});

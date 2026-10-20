@@ -40,12 +40,97 @@ export interface ExportStats {
   reused: number;
 }
 
+interface PanelFrame {
+  websiteId: string;
+  step: ExportStepResult;
+  bitmap: ImageBitmap | null;
+}
+
+/** Fetches one website's frame `n` from the export session and decodes it for WebGL. */
+async function fetchPanelFrame(websiteId: string, n: number): Promise<PanelFrame> {
+  const step = await window.looit.exporter.frame(websiteId, n);
+  // No frame: the website didn't change, keep showing the previous one.
+  const bitmap = step.frame
+    ? await createImageBitmap(new Blob([step.frame.png as Uint8Array<ArrayBuffer>], { type: 'image/png' }), {
+        imageOrientation: 'flipY',
+        premultiplyAlpha: 'none',
+        colorSpaceConversion: 'none',
+      })
+    : null;
+  return { websiteId, step, bitmap };
+}
+
 /** Rough MP4 size in bytes, from the bitrate this encoder produced in testing. */
 export function estimateSize(project: Project): number {
   const { width, height, fps } = project.output;
   // ~1.7 Mbit/s measured at 1280x720@30 with QUALITY_VERY_HIGH; grows sub-linearly with pixel rate.
   const bitsPerSecond = 1_700_000 * ((width * height * fps) / (1280 * 720 * 30)) ** 0.75;
   return (bitsPerSecond / 8) * project.duration;
+}
+
+/** Renders exact export frames (PNG data URLs) at the given times, without encoding. */
+export interface FrameRenderContext {
+  project: Project;
+  view: SceneView;
+  renderer: THREE.WebGLRenderer;
+  siteTexture(websiteId: string): SiteTexture;
+  onProgress?(done: number, total: number): void;
+}
+
+export async function renderFrames(ctx: FrameRenderContext, times: number[]): Promise<string[]> {
+  const { project, view, renderer } = ctx;
+  const { width, height, fps } = project.output;
+  if (websites(project).length === 0) throw new Error('Add a website panel before rendering frames.');
+  if (times.length === 0) throw new Error('Give at least one time.');
+
+  const canvas = renderer.domElement;
+  const prevPixelRatio = renderer.getPixelRatio();
+  const prevSize = { w: canvas.width, h: canvas.height };
+  const prevAspect = view.camera.aspect;
+  const prevUrls = new Map(view.pageUrls);
+
+  // Same fresh, virtual-time page the export uses, so the frame is the export.
+  const session = await window.looit.exporter.begin({
+    project: serializeProject(project),
+    settleMs: SETTLE_MS,
+    diagnostics: false,
+  });
+  const targets = [
+    ...new Set(
+      times.map((t) => Math.min(Math.max(Math.round((Number.isFinite(t) ? t : 0) * fps), 0), session.totalFrames - 1)),
+    ),
+  ].sort((a, b) => a - b);
+  const last = targets[targets.length - 1];
+  const shots = new Map<number, string>();
+  try {
+    renderer.setPixelRatio(1);
+    renderer.setSize(width, height, false);
+    view.setAspect(width / height);
+    view.hideGuides();
+    await view.prepare(project);
+
+    for (let n = 0; n <= last; n++) {
+      const panels = await Promise.all(session.websiteIds.map((id) => fetchPanelFrame(id, n)));
+      for (const { websiteId, step, bitmap } of panels) {
+        const tex = ctx.siteTexture(websiteId);
+        if (bitmap && tex.updateBitmap(bitmap)) view.setWebsiteTexture(websiteId, tex.texture);
+        if (step.url && !step.url.startsWith('about:')) view.pageUrls.set(websiteId, step.url);
+      }
+      const t = frameTime(n, fps);
+      view.sync(project, t, { selectedId: null, showHelpers: false });
+      renderer.render(view.scene, view.camera);
+      if (targets.includes(n)) shots.set(n, canvas.toDataURL('image/png'));
+      ctx.onProgress?.(n + 1, last + 1);
+    }
+  } finally {
+    renderer.setPixelRatio(prevPixelRatio);
+    renderer.setSize(prevSize.w / prevPixelRatio, prevSize.h / prevPixelRatio, false);
+    view.setAspect(prevAspect);
+    view.pageUrls.clear();
+    for (const [id, url] of prevUrls) view.pageUrls.set(id, url);
+    await window.looit.exporter.end();
+  }
+  return targets.map((n) => shots.get(n)!);
 }
 
 export async function exportVideo(ctx: ExportContext): Promise<void> {
@@ -91,20 +176,8 @@ export async function exportVideo(ctx: ExportContext): Promise<void> {
     const total = session.totalFrames;
     if (total !== frameCount(project.duration, fps)) throw new Error('Export frame count mismatch.');
     // Fetch and decode every panel's frame n (off the main thread, already flipped for WebGL).
-    const fetchOne = async (websiteId: string, n: number) => {
-      const step = await window.looit.exporter.frame(websiteId, n);
-      // No frame: the website didn't change, keep showing the previous one.
-      const bitmap = step.frame
-        ? await createImageBitmap(new Blob([step.frame.png as Uint8Array<ArrayBuffer>], { type: 'image/png' }), {
-            imageOrientation: 'flipY',
-            premultiplyAlpha: 'none',
-            colorSpaceConversion: 'none',
-          })
-        : null;
-      return { websiteId, step, bitmap };
-    };
     const request = (n: number) => {
-      const p = Promise.all(session.websiteIds.map((id) => fetchOne(id, n)));
+      const p = Promise.all(session.websiteIds.map((id) => fetchPanelFrame(id, n)));
       p.catch(() => {}); // handled when awaited; avoids an unhandled rejection on cancel
       return p;
     };

@@ -87,6 +87,83 @@ export const TOOLS: ToolDefinition[] = [
     annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: true },
   },
   {
+    name: 'patch_project',
+    title: 'Edit part of the studio project',
+    description:
+      'Changes the AI Studio project with one or more operations instead of resending the whole JSON. The patch is applied to a copy and validated first: on an error nothing changes and the message names the operation and field. Operations: set (JSON Pointer + value), remove (JSON Pointer), add_object, remove_object, add_keyframe, remove_keyframe, add_event (click, scroll, type, press), remove_event. See looit_guide for the exact shapes.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        patch: {
+          type: 'array',
+          minItems: 1,
+          maxItems: 200,
+          description:
+            'Operations, applied in order. Each has "op" plus its fields; see the guide for the shape of each operation.',
+          items: {
+            type: 'object',
+            properties: {
+              op: {
+                type: 'string',
+                enum: [
+                  'set',
+                  'remove',
+                  'add_object',
+                  'remove_object',
+                  'add_keyframe',
+                  'remove_keyframe',
+                  'add_event',
+                  'remove_event',
+                ],
+              },
+              path: { type: 'string', description: 'JSON Pointer, e.g. /objects/1/viewport/width (set, remove).' },
+              value: { description: 'New value (set) or keyframe value (add_keyframe).' },
+              object_id: {
+                type: 'string',
+                description: 'Object id (add_keyframe, remove_keyframe, add_event, remove_event).',
+              },
+              property: {
+                type: 'string',
+                description: 'position, rotation, scale, opacity, zoom, target or cursor (keyframe operations).',
+              },
+              time: { type: 'number', minimum: 0, description: 'Timeline seconds (keyframe and event operations).' },
+              easing: { type: 'string', enum: ['linear', 'easeIn', 'easeOut', 'easeInOut', 'hold'] },
+              kind: {
+                type: 'string',
+                enum: ['click', 'scroll', 'type', 'press'],
+                description: 'Event kind (add_event).',
+              },
+              deltaY: { type: 'number', description: 'Scroll distance in CSS pixels (add_event, kind scroll).' },
+              key: { type: 'string', description: 'Key name for press, e.g. Enter (add_event).' },
+              text: { type: 'string', maxLength: 5000, description: 'Text to type (add_event, kind type).' },
+              cps: { type: 'number', minimum: 1, maximum: 100, description: 'Typing speed (add_event, kind type)' },
+              id: { type: 'string', description: 'Event id (remove_event).' },
+              object: { type: 'object', description: 'The object to add (add_object), as in the project JSON.' },
+            },
+            required: ['op'],
+            additionalProperties: false,
+          },
+        },
+      },
+      required: ['patch'],
+      additionalProperties: false,
+    },
+    annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: true },
+  },
+  {
+    name: 'validate_project',
+    title: 'Check a project without applying it',
+    description:
+      'Validates project JSON with the same rules set_project uses and reports the first problem, without changing the studio. Use it before a big set_project, or to check edits you built offline.',
+    inputSchema: {
+      type: 'object',
+      properties: { project: { type: 'object', description: 'The complete project JSON to check.' } },
+      required: ['project'],
+      additionalProperties: false,
+    },
+    annotations: { readOnlyHint: true, openWorldHint: false },
+  },
+  {
     name: 'apply_preset',
     title: 'Apply an animation preset',
     description:
@@ -129,13 +206,41 @@ export const TOOLS: ToolDefinition[] = [
     name: 'screenshot',
     title: 'Screenshot',
     description:
-      "Shows you a frame of the studio project at `time`: target 'scene' (default) is the 3D view the video will show (camera, panels, cursor, background); target 'website' is the page itself at full size. The preview is close to, but not exactly, the exported video (hover effects between events are approximate).",
+      "Shows you a frame of the studio project at `time` (or several with `times`): target 'scene' (default) is the 3D view the video will show (camera, panels, cursor, background); target 'website' is the page itself at full size. The preview is close to, but not exactly, the exported video; use render_frame when a frame must match the export exactly.",
     inputSchema: {
       type: 'object',
       properties: {
         time,
+        times: {
+          type: 'array',
+          minItems: 1,
+          maxItems: 6,
+          items: { type: 'number', minimum: 0 },
+          description: 'Several times in one call (each is an image in the answer).',
+        },
         target: { type: 'string', enum: ['scene', 'website'] },
         website_id: websiteId,
+      },
+      additionalProperties: false,
+    },
+    annotations: { readOnlyHint: true, openWorldHint: true },
+  },
+  {
+    name: 'render_frame',
+    title: 'Render export frames',
+    description:
+      'Renders exact video frames: the same fresh page, virtual clock and frame stepping the MP4 export uses, returned as PNG without encoding a video. Slower than screenshot (it steps the page from time 0 to the last time you ask for), but pixel-identical to the export. Use it to check scroll landing, reveal animations and hover menus before a long render. Up to 6 times per call.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        time,
+        times: {
+          type: 'array',
+          minItems: 1,
+          maxItems: 6,
+          items: { type: 'number', minimum: 0 },
+          description: 'Times to render, in seconds.',
+        },
       },
       additionalProperties: false,
     },

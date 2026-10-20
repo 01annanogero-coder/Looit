@@ -12,9 +12,5 @@
     "jsx": "react-jsx",
     "strict": true
   },
-  "include": [
-    "src/**/*",
-    "*.ts",
-    "*.mts"
-  ]
+  "include": ["src/**/*", "*.ts", "*.mts"]
 }

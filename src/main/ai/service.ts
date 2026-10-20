@@ -17,7 +17,8 @@ import {
   type Project,
   type SceneObject,
 } from '../../engine/project';
-import { MAX_DURATION, parseProject, serializeProject } from '../../engine/schema';
+import { MAX_DURATION, parseProject, ProjectFileError, serializeProject } from '../../engine/schema';
+import { applyPatch, type PatchOp } from '../../engine/patch';
 import { IMAGE_PLACEHOLDER } from '../mcp/guide';
 import type { ToolResult } from '../mcp/bridge';
 import { isAllowedSiteUrl, type WebsiteHost } from '../website';
@@ -114,12 +115,18 @@ export class AiService {
         return jsonResult(forAi(await this.studioProject()));
       case 'set_project':
         return this.setProject(args);
+      case 'patch_project':
+        return this.patchProject(args);
+      case 'validate_project':
+        return this.validateProject(args);
       case 'apply_preset':
         return this.applyPreset(args);
       case 'inspect_page':
         return this.inspectPage(args);
       case 'screenshot':
         return this.screenshot(args);
+      case 'render_frame':
+        return this.renderFrame(args);
       case 'preview':
         return this.preview(args);
       case 'export_video':
@@ -207,6 +214,31 @@ export class AiService {
     return textResult(`Project updated.\n${summary(project)}`);
   }
 
+  private async validateProject(args: Record<string, unknown>): Promise<ToolResult> {
+    const raw = typeof args.project === 'string' ? (JSON.parse(args.project) as unknown) : args.project;
+    if (!raw || typeof raw !== 'object') throw new Error('project must be the project JSON object.');
+    try {
+      const project = parseProject(JSON.stringify(raw));
+      return textResult(`Valid project.\n${summary(project)}`);
+    } catch (err) {
+      if (err instanceof ProjectFileError) return textResult(err.message, true);
+      throw err;
+    }
+  }
+
+  private async patchProject(args: Record<string, unknown>): Promise<ToolResult> {
+    this.requireStudio();
+    await this.refuseWhileExporting();
+    const project = await this.studioProject();
+    const ops = args.patch;
+    if (!Array.isArray(ops)) throw new Error('patch must be a list of operations.');
+    const next = applyPatch(project, ops as PatchOp[]);
+    const { time } = await this.status();
+    await this.load(next, Math.min(time, next.duration));
+    const n = ops.length;
+    return textResult(`Project patched (${n} operation${n === 1 ? '' : 's'}).\n${summary(next)}`);
+  }
+
   private async applyPreset(args: Record<string, unknown>): Promise<ToolResult> {
     await this.refuseWhileExporting();
     const project = await this.studioProject();
@@ -254,26 +286,47 @@ export class AiService {
   }
 
   private async screenshot(args: Record<string, unknown>): Promise<ToolResult> {
-    const { id, time } = await this.websiteTarget(args);
-    if (args.target === 'website') {
-      await this.studio.rpc.request('seek', { time }, 120_000);
-      const png = await this.studio.website!.capturePng(id);
-      return {
-        content: [
-          { type: 'text', text: `Website ${id} at ${time.toFixed(2)} s:` },
-          { type: 'image', data: Buffer.from(png).toString('base64'), mimeType: 'image/png' },
-        ],
-      };
+    const { project, id, time } = await this.websiteTarget(args);
+    const requested = Array.isArray(args.times) ? args.times : args.time !== undefined ? [args.time] : [time];
+    if (requested.length === 0) throw new Error('Give time or times.');
+    if (requested.length > 6) throw new Error('At most 6 times per call.');
+    const times = requested.map((t) => clamp(Number(t), 0, project.duration));
+    const content: ToolResult['content'] = [];
+    for (const t of times) {
+      if (args.target === 'website') {
+        await this.studio.rpc.request('seek', { time: t }, 120_000);
+        const png = await this.studio.website!.capturePng(id);
+        content.push({ type: 'text', text: `Website ${id} at ${t.toFixed(2)} s:` });
+        content.push({ type: 'image', data: Buffer.from(png).toString('base64'), mimeType: 'image/png' });
+      } else {
+        const dataUrl = await this.studio.rpc.request<string>('screenshot', { time: t }, 120_000);
+        const m = /^data:(image\/\w+);base64,(.*)$/.exec(dataUrl);
+        if (!m) throw new Error('The studio did not produce an image.');
+        content.push({ type: 'text', text: `Scene at ${t.toFixed(2)} s:` });
+        content.push({ type: 'image', data: m[2], mimeType: m[1] });
+      }
     }
-    const dataUrl = await this.studio.rpc.request<string>('screenshot', { time }, 120_000);
-    const m = /^data:(image\/\w+);base64,(.*)$/.exec(dataUrl);
-    if (!m) throw new Error('The studio did not produce an image.');
-    return {
-      content: [
-        { type: 'text', text: `Scene at ${time.toFixed(2)} s:` },
-        { type: 'image', data: m[2], mimeType: m[1] },
-      ],
-    };
+    return { content };
+  }
+
+  /** Exact export frames (the same page pipeline the MP4 uses), without encoding a video. */
+  private async renderFrame(args: Record<string, unknown>): Promise<ToolResult> {
+    this.requireStudio();
+    const project = await this.studioProject();
+    const requested = Array.isArray(args.times) ? args.times : args.time !== undefined ? [args.time] : [];
+    if (requested.length === 0) throw new Error('Give time, or times.');
+    if (requested.length > 6) throw new Error('At most 6 times per call.');
+    const times = requested.map((t) => clamp(Number(t), 0, project.duration));
+    const images = await this.studio.rpc.request<string[]>('renderFrames', { times }, 900_000);
+    const content: ToolResult['content'] = [];
+    times.forEach((t, i) => {
+      const m = /^data:(image\/\w+);base64,(.*)$/.exec(images[i] ?? '');
+      if (!m) return;
+      content.push({ type: 'text', text: `Export frame at ${t.toFixed(2)} s:` });
+      content.push({ type: 'image', data: m[2], mimeType: m[1] });
+    });
+    if (content.length === 0) throw new Error('No frames were rendered.');
+    return { content };
   }
 
   private async preview(args: Record<string, unknown>): Promise<ToolResult> {

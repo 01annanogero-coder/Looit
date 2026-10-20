@@ -210,7 +210,25 @@ export interface TextTexture {
   height: number;
 }
 
-export function makeTextTexture(text: string, size: number, color: string, weight: number): TextTexture {
+export interface TextStyle {
+  /** Rounded pill behind the text, drawn into the same texture. */
+  background?: { color: string; opacity: number; padding: number; radius: number } | null;
+  /** Drop shadow, drawn into the same texture. */
+  shadow?: { color: string; opacity: number; offsetX: number; offsetY: number; blur: number } | null;
+}
+
+function withAlpha(color: string, alpha: number): string {
+  const n = parseInt(color.slice(1), 16);
+  return `rgba(${(n >> 16) & 255}, ${(n >> 8) & 255}, ${n & 255}, ${alpha})`;
+}
+
+export function makeTextTexture(
+  text: string,
+  size: number,
+  color: string,
+  weight: number,
+  style: TextStyle = {},
+): TextTexture {
   const lines = (text || ' ').split('\n');
   const scale = Math.min(TEXT_PPU, MAX_CANVAS / Math.max(size * lines.length * 1.25, 1));
   const fontPx = size * scale;
@@ -220,15 +238,34 @@ export function makeTextTexture(text: string, size: number, color: string, weigh
   const lineHeight = fontPx * 1.2;
   const pad = Math.ceil(fontPx * 0.15);
   const textWidth = Math.max(...lines.map((l) => measure.measureText(l).width), 1);
+  // A pill adds padding around the text; the texture grows to hold it.
+  const bg = style.background ?? null;
+  const bgPad = bg ? Math.ceil(bg.padding * fontPx) : 0;
+  const outer = pad + bgPad;
   const canvas = document.createElement('canvas');
-  canvas.width = Math.min(MAX_CANVAS, Math.ceil(textWidth + pad * 2));
-  canvas.height = Math.min(MAX_CANVAS, Math.ceil(lineHeight * lines.length + pad * 2));
+  canvas.width = Math.min(MAX_CANVAS, Math.ceil(textWidth + outer * 2));
+  canvas.height = Math.min(MAX_CANVAS, Math.ceil(lineHeight * lines.length + outer * 2));
   const ctx = canvas.getContext('2d')!;
+  if (bg) {
+    ctx.globalAlpha = bg.opacity;
+    ctx.fillStyle = bg.color;
+    ctx.beginPath();
+    ctx.roundRect(0, 0, canvas.width, canvas.height, Math.min(bg.radius * fontPx, canvas.height / 2));
+    ctx.fill();
+    ctx.globalAlpha = 1;
+  }
   ctx.font = font;
   ctx.fillStyle = color;
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
-  lines.forEach((line, i) => ctx.fillText(line, canvas.width / 2, pad + lineHeight * (i + 0.5)));
+  const sh = style.shadow ?? null;
+  if (sh) {
+    ctx.shadowColor = withAlpha(sh.color, sh.opacity);
+    ctx.shadowBlur = sh.blur * fontPx;
+    ctx.shadowOffsetX = sh.offsetX * fontPx;
+    ctx.shadowOffsetY = sh.offsetY * fontPx;
+  }
+  lines.forEach((line, i) => ctx.fillText(line, canvas.width / 2, outer + lineHeight * (i + 0.5)));
   return { texture: canvasTexture(canvas), width: canvas.width / scale, height: canvas.height / scale };
 }
 

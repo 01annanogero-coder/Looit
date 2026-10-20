@@ -59,9 +59,13 @@ interface WebsiteNode {
 interface TextNode {
   kind: 'text';
   group: THREE.Group;
-  mesh: THREE.Mesh<THREE.PlaneGeometry, THREE.MeshBasicMaterial>;
+  mesh: THREE.Mesh<THREE.PlaneGeometry, THREE.MeshBasicMaterial> | THREE.Sprite;
   outline: THREE.LineSegments;
   key: string;
+  /** Pinned to the frame instead of living in the scene. */
+  screen: boolean;
+  /** Texture size (world units at scale 1). */
+  size: { w: number; h: number };
 }
 
 interface CursorNode {
@@ -184,7 +188,7 @@ export class SceneView {
         out.push({ id, mesh: n.panel, page: true });
         if (n.bar.visible) out.push({ id, mesh: n.bar });
       }
-      if (n.kind === 'text' && n.group.visible) out.push({ id, mesh: n.mesh });
+      if (n.kind === 'text' && n.group.visible && !n.screen) out.push({ id, mesh: n.mesh as THREE.Mesh });
     }
     return out;
   }
@@ -383,28 +387,65 @@ export class SceneView {
 
   private syncText(o: TextObject, time: number, opts: SyncOptions, alive: Set<string>): void {
     alive.add(o.id);
-    const key = `${o.text}|${o.size}|${o.color}|${o.weight}`;
+    const screen = o.space === 'screen';
+    const styleKey = [
+      screen ? 'screen' : 'world',
+      o.text,
+      screen ? 1 : o.size,
+      o.color,
+      o.weight,
+      o.background ? JSON.stringify(o.background) : '-',
+      o.shadow ? JSON.stringify(o.shadow) : '-',
+    ].join('|');
     let n = this.nodes.get(o.id) as TextNode | undefined;
-    if (!n || n.key !== key) {
+    if (!n || n.key !== styleKey) {
       if (n) this.removeNode(o.id, n);
-      const t = makeTextTexture(o.text, o.size, o.color, o.weight);
+      // Screen text is built at size 1 and scaled per frame, so a zoom or a
+      // resize never changes its resolution.
+      const t = makeTextTexture(o.text, screen ? 1 : o.size, o.color, o.weight, {
+        background: o.background,
+        shadow: o.shadow,
+      });
       const group = new THREE.Group();
-      const mesh = new THREE.Mesh(
-        new THREE.PlaneGeometry(t.width, t.height),
-        new THREE.MeshBasicMaterial({ map: t.texture, transparent: true, depthWrite: false, side: THREE.DoubleSide }),
-      );
-      mesh.renderOrder = 3;
+      let mesh: TextNode['mesh'];
+      if (screen) {
+        mesh = new THREE.Sprite(
+          new THREE.SpriteMaterial({ map: t.texture, transparent: true, depthTest: false, depthWrite: false }),
+        );
+        mesh.renderOrder = 20;
+      } else {
+        mesh = new THREE.Mesh(
+          new THREE.PlaneGeometry(t.width, t.height),
+          new THREE.MeshBasicMaterial({ map: t.texture, transparent: true, depthWrite: false, side: THREE.DoubleSide }),
+        );
+        mesh.renderOrder = 3;
+      }
       const outline = outlineFor(t.width, t.height);
       group.add(mesh, outline);
       this.scene.add(group);
-      n = { kind: 'text', group, mesh, outline, key };
+      n = { kind: 'text', group, mesh, outline, key: styleKey, screen, size: { w: t.width, h: t.height } };
       this.nodes.set(o.id, n);
     }
     const state = evaluateTransform(o.transform, time);
-    applyTransform(n.group, state);
+    if (n.screen) {
+      // Pin to the frame: a fixed distance in front of the camera, sized as a
+      // fraction of the frame height, so camera moves and zooms don't touch it.
+      const cam = this.camera;
+      const dist = 1;
+      const viewH = 2 * dist * Math.tan((cam.fov * DEG) / 2);
+      const viewW = viewH * cam.aspect;
+      const scale = (o.size * viewH) / n.size.h;
+      n.mesh.scale.set(n.size.w * scale, n.size.h * scale, 1);
+      const sx = o.screen?.x ?? 0.5;
+      const sy = o.screen?.y ?? 0.5;
+      n.group.position.set((sx - 0.5) * viewW, (0.5 - sy) * viewH, -dist).applyMatrix4(cam.matrixWorld);
+      n.group.quaternion.copy(cam.quaternion);
+    } else {
+      applyTransform(n.group, state);
+    }
     n.group.visible = o.visible && state.opacity > 0;
-    setOpacity(n.mesh.material, state.opacity, true);
-    n.outline.visible = opts.showHelpers && opts.selectedId === o.id;
+    setOpacity(n.mesh.material as THREE.MeshBasicMaterial, state.opacity, true);
+    n.outline.visible = !n.screen && opts.showHelpers && opts.selectedId === o.id;
   }
 
   private syncCursor(o: CursorObject, project: Project, time: number, alive: Set<string>): void {
@@ -443,6 +484,11 @@ export class SceneView {
     n.pointer.position.set(x, y, 0.02);
     n.pointer.visible = o.visible;
     n.pointer.material.opacity = (target.panel.material as THREE.MeshBasicMaterial).opacity;
+    // Zoom is a narrower field of view, so a world-sized pointer grows with it;
+    // undo that when the pointer should keep its size on screen.
+    const zoom = Math.max(sample(cameraOf(project).zoom, time), 0.1);
+    const pointerScale = o.fixedScreenSize ? 1 / zoom : 1;
+    n.pointer.scale.setScalar(pointerScale);
 
     // Click ripple: purely a function of the time since the latest click.
     const last = eventsBetween(o.clicks, -Infinity, time).reduce<number | null>(
@@ -454,7 +500,7 @@ export class SceneView {
     if (n.ripple.visible) {
       const p = age / RIPPLE_DURATION;
       n.ripple.position.set(x, y, 0.01);
-      n.ripple.scale.setScalar(0.4 + p * 1.6);
+      n.ripple.scale.setScalar((0.4 + p * 1.6) * pointerScale);
       n.ripple.material.opacity = 0.9 * (1 - p);
       n.ripple.material.color.set(o.clickColor);
     }
@@ -463,8 +509,8 @@ export class SceneView {
   private removeNode(id: string, n: Node): void {
     const dispose = (o: THREE.Object3D) =>
       o.traverse((c) => {
-        if (c instanceof THREE.Mesh || c instanceof THREE.LineSegments) {
-          c.geometry.dispose();
+        if (c instanceof THREE.Mesh || c instanceof THREE.LineSegments || c instanceof THREE.Sprite) {
+          if (c instanceof THREE.Mesh || c instanceof THREE.LineSegments) c.geometry.dispose();
           const m = c.material as THREE.MeshBasicMaterial;
           const shared = [...this.cursorImages.values()].some((img) => img.texture === m.map);
           const live = [...this.websiteTextures.values()].includes(m.map as THREE.Texture);

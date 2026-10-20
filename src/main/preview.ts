@@ -23,6 +23,12 @@ export const PREVIEW_FPS = 30;
 const SETTLE_MS = 1000;
 const LOAD_TIMEOUT_MS = 60_000;
 const EPS = 1e-6;
+/**
+ * An export frame at time t shows the page after the inputs due at t plus one
+ * frame of animation. The preview advances the same extra frame so a capture at
+ * t equals the exported frame at t (scrolling and reveal animations included).
+ */
+const FRAME_LEAD = 1 / PREVIEW_FPS;
 
 export interface PreviewEvents {
   frame(frame: SiteFrame): void;
@@ -53,6 +59,8 @@ export class PreviewController {
   private pageKey = '';
   /** Timeline time the page currently shows. */
   private pageTime = 0;
+  /** The page's virtual clock, in seconds (pageTime plus the one-frame lead). */
+  private pageClock = 0;
   /** State-changing inputs already dispatched to the page, in order. */
   private applied: TimedInput[] = [];
   private diverged = false;
@@ -259,7 +267,11 @@ export class PreviewController {
     for (const ev of step.inputs) if (isStateChanging(ev)) this.applied.push(ev);
     await this.page.input(step.inputs.map((e) => e.input));
     // Real-time playback: don't wait for the network, just like a real browser.
-    await this.page.advance((step.time - this.pageTime) * 1000, 'free');
+    const ms = (step.time - this.pageClock) * 1000;
+    if (ms > 0) {
+      await this.page.advance(ms, 'free');
+      this.pageClock = step.time;
+    }
     this.pageTime = step.time;
   }
 
@@ -270,17 +282,20 @@ export class PreviewController {
       .filter((e) => e.time > this.pageTime + EPS && e.time <= time + EPS)
       .sort((a, b) => a.time - b.time);
     for (const ev of due) {
-      if (ev.time > this.pageTime) {
-        await page.advance((ev.time - this.pageTime) * 1000, 'network');
-        this.pageTime = ev.time;
+      if (ev.time > this.pageClock + EPS) {
+        await page.advance((ev.time - this.pageClock) * 1000, 'network');
+        this.pageClock = ev.time;
       }
       await page.input([ev.input]);
       if (isStateChanging(ev)) this.applied.push(ev);
     }
-    if (time > this.pageTime) {
-      await page.advance((time - this.pageTime) * 1000, 'network');
-      this.pageTime = time;
+    // Match an export frame at `time`: its inputs, then one frame of animation.
+    const target = Math.max(time, this.pageTime) + FRAME_LEAD;
+    if (target > this.pageClock + EPS) {
+      await page.advance((target - this.pageClock) * 1000, 'network');
+      this.pageClock = target;
     }
+    this.pageTime = time;
   }
 
   private async rebuild(target: PreviewTarget): Promise<void> {
@@ -347,6 +362,7 @@ export class PreviewController {
     this.page = page;
     this.pageKey = `${target.url}|${target.viewport.width}x${target.viewport.height}`;
     this.pageTime = 0;
+    this.pageClock = 0;
     this.applied = [];
     this.diverged = false;
     old?.destroy();

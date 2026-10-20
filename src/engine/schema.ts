@@ -215,11 +215,41 @@ function sceneObject(v: unknown, path: Path, allowFile: boolean): SceneObject {
         ...base,
         kind: 'text',
         text: str(o.text, `${path}.text`, 2000),
-        size: num(o.size, `${path}.size`, 0.05, 20),
+        size: num(o.size, `${path}.size`, 0.005, 20),
         color: color(o.color, `${path}.color`),
         weight: o.weight as TextObject['weight'],
         transform: transform(o.transform, `${path}.transform`),
       };
+      if (o.space !== undefined) {
+        if (o.space !== 'world' && o.space !== 'screen') fail(`${path}.space`, 'expected world or screen');
+        t.space = o.space;
+      }
+      if (o.screen !== undefined) {
+        const sc = obj(o.screen, `${path}.screen`);
+        t.screen = {
+          x: num(sc.x, `${path}.screen.x`, 0, 1),
+          y: num(sc.y, `${path}.screen.y`, 0, 1),
+        };
+      }
+      if (o.background !== undefined && o.background !== null) {
+        const bg = obj(o.background, `${path}.background`);
+        t.background = {
+          color: color(bg.color, `${path}.background.color`),
+          opacity: num(bg.opacity, `${path}.background.opacity`, 0, 1),
+          padding: num(bg.padding, `${path}.background.padding`, 0, 4),
+          radius: num(bg.radius, `${path}.background.radius`, 0, 4),
+        };
+      }
+      if (o.shadow !== undefined && o.shadow !== null) {
+        const sh = obj(o.shadow, `${path}.shadow`);
+        t.shadow = {
+          color: color(sh.color, `${path}.shadow.color`),
+          opacity: num(sh.opacity, `${path}.shadow.opacity`, 0, 1),
+          offsetX: num(sh.offsetX, `${path}.shadow.offsetX`, -4, 4),
+          offsetY: num(sh.offsetY, `${path}.shadow.offsetY`, -4, 4),
+          blur: num(sh.blur, `${path}.shadow.blur`, 0, 4),
+        };
+      }
       return t;
     }
     case 'cursor': {
@@ -229,6 +259,9 @@ function sceneObject(v: unknown, path: Path, allowFile: boolean): SceneObject {
         targetId: str(o.targetId, `${path}.targetId`, 100),
         position: animated(o.position, `${path}.position`, vec2),
         size: num(o.size, `${path}.size`, 0.05, 5),
+        ...(o.fixedScreenSize === undefined
+          ? {}
+          : { fixedScreenSize: bool(o.fixedScreenSize, `${path}.fixedScreenSize`) }),
         style:
           o.style === undefined
             ? 'arrow'

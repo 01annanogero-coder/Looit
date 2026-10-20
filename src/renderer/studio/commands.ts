@@ -6,7 +6,7 @@ import { create } from 'zustand';
 import { websites } from '../../engine/project';
 import { parseProject, serializeProject } from '../../engine/schema';
 import type { StudioStatus } from '../../shared/ipc';
-import { exportVideo } from '../exporter';
+import { exportVideo, renderFrames as renderExportFrames } from '../exporter';
 import { getEditor, loadProject, setEditor, setPlaying, setStatus } from '../store';
 import { currentRenderer, flushPreviewSync, nextWebsiteFrame, siteTexture, view } from '../viewport/runtime';
 
@@ -78,6 +78,14 @@ async function screenshot(time: number): Promise<string> {
     renderer.setSize(prevSize.w / prevRatio, prevSize.h / prevRatio, false);
     view.setAspect(prevAspect);
   }
+}
+
+async function renderSceneFrames(times: number[]): Promise<string[]> {
+  const renderer = currentRenderer();
+  if (!renderer) throw new Error('The studio is still starting.');
+  if (getEditor().exporting) throw new Error('An export is running.');
+  setPlaying(false);
+  return renderExportFrames({ project: getEditor().project, view, renderer, siteTexture }, times);
 }
 
 async function runExport(fileName: string): Promise<void> {
@@ -165,6 +173,10 @@ export function registerStudioCommands(): void {
         return true;
       case 'screenshot':
         return screenshot(clampTime(params.time));
+      case 'renderFrames': {
+        const times = Array.isArray(params.times) ? params.times.map((t) => clampTime(t)) : [];
+        return renderSceneFrames(times);
+      }
       case 'export': {
         const phase = useStudio.getState().export.phase;
         if (phase === 'choosing' || phase === 'exporting') throw new Error('An export is already running.');

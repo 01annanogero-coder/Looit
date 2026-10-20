@@ -65,13 +65,45 @@ export interface WebsiteObject extends ObjectBase {
   border: PanelBorder;
 }
 
+/** Where a text overlay lives: in the 3D scene, or pinned to the video frame (HUD). */
+export type TextSpace = 'world' | 'screen';
+
+/** A rounded pill drawn behind text so it stays readable over any page. */
+export interface TextBackground {
+  color: string;
+  opacity: number;
+  /** Padding around the text, in text heights (0.3 = 30% of a line). */
+  padding: number;
+  /** Corner radius, in text heights. */
+  radius: number;
+}
+
+export interface TextShadow {
+  color: string;
+  opacity: number;
+  /** Offset in text heights. */
+  offsetX: number;
+  offsetY: number;
+  /** Softness in text heights (0 = hard edge). */
+  blur: number;
+}
+
 export interface TextObject extends ObjectBase {
   kind: 'text';
   text: string;
-  /** Line height in world units. */
+  /** Line height: world units in world space, a fraction of the frame height in screen space. */
   size: number;
   color: string;
   weight: 400 | 600 | 700;
+  /** 'world' (default) puts the text in the scene; 'screen' pins it to the frame. */
+  space?: TextSpace;
+  /** Screen-space anchor in 0..1 of the frame (0,0 = top-left). Default: centre. */
+  screen?: { x: number; y: number };
+  /** Optional pill behind the text. */
+  background?: TextBackground | null;
+  /** Optional drop shadow. */
+  shadow?: TextShadow | null;
+  /** Used in world space; screen text only animates opacity. */
   transform: Transform;
 }
 
@@ -133,6 +165,8 @@ export interface CursorObject extends ObjectBase {
   position: Animated<Vec2>;
   /** Pointer height in world units. */
   size: number;
+  /** Keep the pointer the same on-screen size as the camera zooms (default false). */
+  fixedScreenSize?: boolean;
   style: CursorStyle;
   /** Colour of the ring shown when the cursor clicks. */
   clickColor: string;
