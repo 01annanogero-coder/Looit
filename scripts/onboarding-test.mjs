@@ -223,13 +223,18 @@ try {
     (await ed.ev(`window.__looitEditor.getState().project.name`)) === 'Renamed test',
   );
 
-  // 7. Delete everything this test created (confirmation is auto-accepted).
+  // 7. Delete the test project; the demo must survive.
   await ed.ev(`document.querySelector('.topbar-actions button[title="Back to your projects"]').click()`);
   await waitFor(ed, `!!document.querySelector('.home')`, 15_000);
   await ed.ev(`window.confirm = () => true`);
   for (let i = 0; i < 5; i++) {
     const clicked = await ed.ev(
-      `(() => { const row = document.querySelector('.project-row'); if (!row) return false; row.querySelector('button[title="Delete"]').click(); return true; })()`,
+      `(() => {
+        const row = [...document.querySelectorAll('.project-row')].find((r) => r.querySelector('button[title="Delete"]'));
+        if (!row) return false;
+        row.querySelector('button[title="Delete"]').click();
+        return true;
+      })()`,
     );
     if (!clicked) break;
     await sleep(700);
@@ -241,14 +246,34 @@ try {
       () => false,
     )),
   );
+  const demoRow = await ed.ev(`(() => {
+    const row = [...document.querySelectorAll('.project-row')].find((r) => r.querySelector('.demo-chip'));
+    return row ? { hasDelete: !!row.querySelector('button[title="Delete"]'), chip: !!row.querySelector('.demo-chip') } : null;
+  })()`);
   check(
-    'deleting removes the demo file',
-    !(await fs.stat(demoFile).then(
+    'the demo row is marked and has no delete action',
+    !!demoRow && demoRow.chip && !demoRow.hasDelete,
+    JSON.stringify(demoRow),
+  );
+  const demoStillDeleted = await ed.ev(`(async () => {
+    const snapshot = await window.looit.library.list();
+    if (!snapshot.demo) return 'no demo entry';
+    try {
+      await window.looit.library.remove(snapshot.demo.id);
+      return 'deleted';
+    } catch (err) {
+      return 'refused: ' + err.message;
+    }
+  })()`);
+  check('the library refuses to delete the demo', /refused/.test(String(demoStillDeleted)), String(demoStillDeleted));
+  check(
+    'the demo file is kept',
+    await fs.stat(demoFile).then(
       () => true,
       () => false,
-    )),
+    ),
   );
-  check('the list is empty again', (await ed.ev(`document.querySelectorAll('.project-row').length`)) === 0);
+  check('only the demo project remains', (await ed.ev(`document.querySelectorAll('.project-row').length`)) === 1);
   ed.close();
 } catch (err) {
   check('unexpected error', false, err instanceof Error ? err.message : String(err));

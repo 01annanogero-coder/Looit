@@ -107,6 +107,21 @@ describe('Library', () => {
     await expect(fs.stat(created.entry.path)).rejects.toThrow();
   });
 
+  it('refuses to delete the demo project', async () => {
+    const demo = await lib.demo();
+    await expect(lib.remove(demo.entry.id)).rejects.toThrow(/demo project cannot be deleted/i);
+    expect(trashed).toEqual([]);
+    expect(
+      await fs.stat(demo.entry.path).then(
+        () => true,
+        () => false,
+      ),
+    ).toBe(true);
+    const snapshot = await lib.snapshot();
+    expect(snapshot.demo?.id).toBe(demo.entry.id);
+    expect(snapshot.entries.map((e) => e.id)).toContain(demo.entry.id);
+  });
+
   it('opens the bundled demo tour and reuses the copy', async () => {
     const bundle = await fs.readFile(path.resolve('assets', 'demo.looit'), 'utf8');
     const demo = await lib.demo();

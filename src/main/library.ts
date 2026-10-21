@@ -348,6 +348,9 @@ export class Library {
     return this.run(async () => {
       const index = await this.load();
       const entry = this.find(id);
+      // The demo is part of the app: it can be edited or renamed, but not
+      // removed. (Deleting its file by hand is fine; demo() copies it back.)
+      if (entry.demo) throw new Error('The demo project cannot be deleted. Edit or rename it instead.');
       try {
         await this.deps.trash(entry.path);
       } catch {

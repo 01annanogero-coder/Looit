@@ -251,6 +251,7 @@ export function Home() {
                       <span className="project-name">
                         {entry.pinned && <Pin size={13} />}
                         {entry.name}
+                        {entry.demo && <span className="demo-chip">Demo</span>}
                       </span>
                       <span className={`project-meta${entry.exists ? '' : ' missing'}`}>
                         {entry.exists ? when(entry.updatedAt) : 'file missing'}
@@ -278,9 +279,15 @@ export function Home() {
                     >
                       <FolderOpen size={16} />
                     </button>
-                    <button title="Delete" className="danger" onClick={() => void remove(entry)}>
-                      <Trash2 size={16} />
-                    </button>
+                    {entry.demo ? (
+                      <button title="The demo project cannot be deleted" disabled>
+                        <Trash2 size={16} />
+                      </button>
+                    ) : (
+                      <button title="Delete" className="danger" onClick={() => void remove(entry)}>
+                        <Trash2 size={16} />
+                      </button>
+                    )}
                   </div>
                 </li>
               ))}
