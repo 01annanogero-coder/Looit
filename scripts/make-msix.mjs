@@ -6,7 +6,7 @@
 // kept in certs/ (git-ignored).
 import { execFileSync, spawnSync } from 'node:child_process';
 import { randomBytes } from 'node:crypto';
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 
 const certDir = path.resolve('certs');
@@ -32,6 +32,10 @@ Export-Certificate -Cert $cert -FilePath '${cer}' | Out-Null
   execFileSync('powershell.exe', ['-NoProfile', '-NonInteractive', '-Command', script], { stdio: 'inherit' });
   console.log(`Created dev certificate: ${cer}`);
 }
+
+// Forge's MSIX maker refuses to overwrite an existing package, so a rebuild
+// after a successful build would fail with "dest already exists".
+rmSync(path.resolve('out', 'make', 'msix'), { recursive: true, force: true });
 
 const result = spawnSync('npx', ['electron-forge', 'make'], {
   stdio: 'inherit',
