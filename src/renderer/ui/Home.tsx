@@ -9,6 +9,9 @@ import { openLibraryProject } from '../actions';
 import { ProjectFileError, parseProject } from '../../engine/schema';
 import { setStatus } from '../store';
 
+/** The app icon, emitted by Vite from the project's assets folder. */
+const LOGO = new URL('../../../assets/icon.png', import.meta.url).href;
+
 function errorText(err: unknown): string {
   return (err instanceof Error ? err.message : String(err)).replace(
     /^Error invoking remote method '[^']+': (Error: )?/,
@@ -169,7 +172,7 @@ export function Home() {
   return (
     <div className="home">
       <header className="home-top">
-        <span className="logo">L</span>
+        <img className="logo" src={LOGO} alt="" />
         <div>
           <strong>Looit</strong>
           <span className="muted">Turn websites into 3D explainer videos</span>

@@ -56,6 +56,11 @@ const MAX_PROJECT_BYTES = 20 * 1024 * 1024;
 /** Background images are embedded in the project (as base64), so keep them modest. */
 const MAX_IMAGE_BYTES = 8 * 1024 * 1024;
 
+/** The app icon: window title bar, taskbar and (when packaged) the executable. */
+const APP_ICON = app.isPackaged
+  ? path.join(process.resourcesPath, 'assets', 'icon.png')
+  : path.join(app.getAppPath(), 'assets', 'icon.png');
+
 let libraryInstance: Library | null = null;
 /** The onboarding project library: files in the user's home folder, never in a synced OneDrive folder. */
 function library(): Library {
@@ -623,6 +628,7 @@ function createStudioWindow(s: Studio): BrowserWindow {
     minWidth: 640,
     minHeight: 420,
     title: 'Looit · AI Studio',
+    icon: APP_ICON,
     backgroundColor: '#14161c',
     show: false,
     webPreferences: {
@@ -656,6 +662,7 @@ function createEditor(): void {
     minWidth: 900,
     minHeight: 600,
     title: 'Looit',
+    icon: APP_ICON,
     backgroundColor: '#14161c',
     show: !selfTestOut,
     webPreferences: {

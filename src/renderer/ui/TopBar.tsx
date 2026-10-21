@@ -5,6 +5,9 @@ import { SHORTCUTS, SHOW_SHORTCUTS_EVENT } from '../shortcuts';
 import { isDirty, redo, setPlaying, setTime, undo, useEditor } from '../store';
 import { AiConnectDialog } from './AiConnect';
 
+/** The app icon, emitted by Vite from the project's assets folder. */
+const LOGO = new URL('../../../assets/icon.png', import.meta.url).href;
+
 interface MenuItem {
   label: string;
   shortcut?: string;
@@ -100,7 +103,7 @@ export function TopBar() {
   return (
     <header className="topbar">
       <div className="brand">
-        <span className="logo">L</span>
+        <img className="logo" src={LOGO} alt="" />
         Looit
       </div>
       <nav className="menus">

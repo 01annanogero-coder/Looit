@@ -19,6 +19,17 @@ Product spec: [docs/app-spec.pdf](docs/app-spec.pdf). UI target: [docs/Canva-UI-
 | `node scripts/determinism-test.mjs [copies]` | Exports `test-pages/determinism.html` twice with one website copy and once with several in parallel, and checks every frame matches                                                                                                                                                                                                                                                                                                                                                                                                     |
 | `node scripts/inspect-mp4.mjs <file>`        | Print codec, duration and frame count of an MP4                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
 | `npm run make:msix`                          | Build a dev-signed MSIX in `out/make/msix/x64/`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
+| `node scripts/make-icons.mjs`                | Rebuilds the icon set from `assets/logo.svg`: window icon, `build/icon.ico` and the MSIX tile images                                                                                                                                                                                                                                                                                                                                                                                                                                    |
+
+## Branding
+
+The logo is `assets/logo.svg` (the neon ribbon). `node scripts/make-icons.mjs` renders it with Electron on a white rounded tile and writes:
+
+- `assets/icon.png` — the window icon (title bar and taskbar) at 512 px, also shipped in `resources/assets` for the packaged app.
+- `build/icon.ico` — 16–256 px, used by the packaged `Looit.exe` and its taskbar shortcut.
+- `build/msix/*.png` — the Store/Start tile images (square, wide, splash, lock screen).
+
+`assets/icon.png` is also what the onboarding screen and the editor toolbar show, through Vite's asset pipeline.
 
 ## Projects
 

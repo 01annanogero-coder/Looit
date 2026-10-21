@@ -86,10 +86,17 @@ const config: ForgeConfig = {
   packagerConfig: {
     asar: true,
     executableName: 'Looit',
+    // Windows uses build/icon.ico (16-256 px) for the exe and its taskbar icon.
+    icon: path.join('build', 'icon'),
+    // The window icon is loaded at runtime; the Vite plugin keeps only .vite in
+    // the asar, so the assets folder ships next to it in resources/.
+    extraResource: ['assets'],
   },
   rebuildConfig: {},
   makers: [
     new MakerMSIXWithAlias({
+      // Store/Start tile images generated from assets/logo.svg.
+      packageAssets: path.join('build', 'msix'),
       windowsKitVersion: '10.0.26100.0',
       manifestVariables: MSIX_IDENTITY,
     }),
