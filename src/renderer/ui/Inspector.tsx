@@ -4,11 +4,13 @@
 import type { Draft } from 'immer';
 import { Keyboard, MousePointerClick, Plus, RotateCw, Trash2 } from 'lucide-react';
 import { useState } from 'react';
+import * as THREE from 'three';
 import type { Easing, Vec2 } from '../../engine/animation';
 import { keyframeAt, setValueAt } from '../../engine/edit';
 import {
   DEFAULT_TYPING_CPS,
   environmentOf,
+  evaluateTransform,
   SPECIAL_KEYS,
   getAnimated,
   hasTransform,
@@ -33,6 +35,7 @@ import { CAMERA_PRESETS, OBJECT_PRESETS } from '../../engine/presets';
 import { applyPreset, pickBackgroundImage, setEnvironment, toggleKey } from '../actions';
 import { edit, getEditor, isCursorEventProp, useEditor, type KeyRef } from '../store';
 import { reloadWebsite } from '../viewport/runtime';
+import { PANEL_WIDTH } from '../viewport/scene-view';
 import { ColorField, NumberField, Row, Section, TextField, Toggle, VecRow, type KeyState } from './controls';
 
 function keyState(a: Animated<unknown>, time: number): KeyState {
@@ -54,6 +57,7 @@ function editObject<K extends SceneObject['kind']>(
 
 /** Drops floating-point noise (e.g. -1.1159999999) from interpolated components. */
 const tidy = (v: number) => Math.round(v * 1e4) / 1e4;
+const DEG = Math.PI / 180;
 
 function setAnimated(id: string, prop: PropName, raw: number | number[], gesture: boolean): void {
   const time = getEditor().time;
@@ -68,36 +72,48 @@ function setAnimated(id: string, prop: PropName, raw: number | number[], gesture
   );
 }
 
-function TransformSection({ obj, time }: { obj: TransformObject; time: number }) {
+function TransformSection({
+  obj,
+  time,
+  opacityOnly = false,
+}: {
+  obj: TransformObject;
+  time: number;
+  opacityOnly?: boolean;
+}) {
   const t = obj.transform;
   return (
     <Section title="Transform">
-      <VecRow
-        label="Position"
-        value={sample(t.position, time)}
-        step={0.05}
-        onChange={(v, g) => setAnimated(obj.id, 'position', v, g)}
-        keyState={keyState(t.position, time)}
-        onToggleKey={() => toggleKey(obj.id, 'position')}
-      />
-      <VecRow
-        label="Rotation"
-        value={sample(t.rotation, time)}
-        step={0.5}
-        precision={1}
-        suffix="°"
-        onChange={(v, g) => setAnimated(obj.id, 'rotation', v, g)}
-        keyState={keyState(t.rotation, time)}
-        onToggleKey={() => toggleKey(obj.id, 'rotation')}
-      />
-      <VecRow
-        label="Scale"
-        value={sample(t.scale, time)}
-        step={0.01}
-        onChange={(v, g) => setAnimated(obj.id, 'scale', v, g)}
-        keyState={keyState(t.scale, time)}
-        onToggleKey={() => toggleKey(obj.id, 'scale')}
-      />
+      {!opacityOnly && (
+        <>
+          <VecRow
+            label="Position"
+            value={sample(t.position, time)}
+            step={0.05}
+            onChange={(v, g) => setAnimated(obj.id, 'position', v, g)}
+            keyState={keyState(t.position, time)}
+            onToggleKey={() => toggleKey(obj.id, 'position')}
+          />
+          <VecRow
+            label="Rotation"
+            value={sample(t.rotation, time)}
+            step={0.5}
+            precision={1}
+            suffix="°"
+            onChange={(v, g) => setAnimated(obj.id, 'rotation', v, g)}
+            keyState={keyState(t.rotation, time)}
+            onToggleKey={() => toggleKey(obj.id, 'rotation')}
+          />
+          <VecRow
+            label="Scale"
+            value={sample(t.scale, time)}
+            step={0.01}
+            onChange={(v, g) => setAnimated(obj.id, 'scale', v, g)}
+            keyState={keyState(t.scale, time)}
+            onToggleKey={() => toggleKey(obj.id, 'scale')}
+          />
+        </>
+      )}
       <VecRow
         label="Opacity"
         value={[sample(t.opacity, time)]}
@@ -351,6 +367,17 @@ function WindowSection({ obj }: { obj: WebsiteObject }) {
 }
 
 function TextProps({ obj, time }: { obj: TextObject; time: number }) {
+  const screen = obj.space === 'screen';
+  const bg = obj.background ?? null;
+  const shadow = obj.shadow ?? null;
+  const setBackground = (patch: Partial<NonNullable<TextObject['background']>>) =>
+    editObject<'text'>(obj.id, (o) => {
+      o.background = o.background ? { ...o.background, ...patch } : null;
+    });
+  const setShadow = (patch: Partial<NonNullable<TextObject['shadow']>>) =>
+    editObject<'text'>(obj.id, (o) => {
+      o.shadow = o.shadow ? { ...o.shadow, ...patch } : null;
+    });
   return (
     <>
       <Section title="Text">
@@ -365,18 +392,75 @@ function TextProps({ obj, time }: { obj: TextObject; time: number }) {
             }
           />
         </Row>
+        <Row label="Placement">
+          <select
+            value={screen ? 'screen' : 'world'}
+            onChange={(e) =>
+              editObject<'text'>(obj.id, (o) => {
+                if (e.target.value === 'screen') {
+                  o.space = 'screen';
+                  o.screen = o.screen ?? { x: 0.5, y: 0.12 };
+                  // World sizes (roughly 0.1–20) do not mean anything as fractions.
+                  if (o.size > 0.6) o.size = 0.08;
+                } else {
+                  o.space = 'world';
+                  if (o.size < 0.6) o.size = 1.2;
+                }
+              })
+            }
+          >
+            <option value="world">In the scene</option>
+            <option value="screen">On screen (HUD)</option>
+          </select>
+        </Row>
+        {screen && (
+          <Row label="Anchor">
+            <div className="vec" style={{ gridTemplateColumns: 'repeat(2, 1fr)' }}>
+              <NumberField
+                value={Math.round((obj.screen?.x ?? 0.5) * 100)}
+                min={0}
+                max={100}
+                step={1}
+                precision={0}
+                suffix="%"
+                title="Horizontal position: 0% = left edge, 100% = right edge."
+                onChange={(v) =>
+                  editObject<'text'>(obj.id, (o) => {
+                    o.screen = { x: Math.min(Math.max(v, 0), 100) / 100, y: o.screen?.y ?? 0.5 };
+                  })
+                }
+              />
+              <NumberField
+                value={Math.round((obj.screen?.y ?? 0.5) * 100)}
+                min={0}
+                max={100}
+                step={1}
+                precision={0}
+                suffix="%"
+                title="Vertical position: 0% = top edge, 100% = bottom edge."
+                onChange={(v) =>
+                  editObject<'text'>(obj.id, (o) => {
+                    o.screen = { x: o.screen?.x ?? 0.5, y: Math.min(Math.max(v, 0), 100) / 100 };
+                  })
+                }
+              />
+            </div>
+          </Row>
+        )}
         <Row label="Size">
           <NumberField
-            value={obj.size}
-            min={0.1}
-            max={20}
-            step={0.02}
-            label="↔"
+            value={screen ? Math.round(obj.size * 1000) / 10 : obj.size}
+            min={screen ? 1 : 0.1}
+            max={screen ? 60 : 20}
+            step={screen ? 0.5 : 0.02}
+            precision={screen ? 1 : 2}
+            suffix={screen ? '% of frame' : undefined}
+            title={screen ? 'Text height as a percentage of the video height.' : 'Line height in world units.'}
             onChange={(v, g) =>
               editObject<'text'>(
                 obj.id,
                 (o) => {
-                  o.size = v;
+                  o.size = screen ? Math.min(Math.max(v, 1), 60) / 100 : v;
                 },
                 g ? `text-size:${obj.id}` : undefined,
               )
@@ -412,7 +496,105 @@ function TextProps({ obj, time }: { obj: TextObject; time: number }) {
           </select>
         </Row>
       </Section>
-      <TransformSection obj={obj} time={time} />
+      <Section title="Readability">
+        <Row label="Pill">
+          <Toggle
+            checked={!!bg}
+            onChange={(on) =>
+              editObject<'text'>(obj.id, (o) => {
+                o.background = on ? { color: '#0b1220', opacity: 0.65, padding: 0.45, radius: 0.5 } : null;
+              })
+            }
+          />
+        </Row>
+        {bg && (
+          <>
+            <Row label="Fill">
+              <ColorField value={bg.color} onChange={(v) => setBackground({ color: v })} />
+            </Row>
+            <Row label="Fill opacity">
+              <NumberField
+                value={bg.opacity}
+                min={0}
+                max={1}
+                step={0.01}
+                onChange={(v) => setBackground({ opacity: Math.min(Math.max(v, 0), 1) })}
+              />
+            </Row>
+            <Row label="Padding">
+              <NumberField
+                value={bg.padding}
+                min={0}
+                max={2}
+                step={0.05}
+                title="Space around the text, in multiples of its height."
+                onChange={(v) => setBackground({ padding: Math.min(Math.max(v, 0), 2) })}
+              />
+            </Row>
+            <Row label="Corner">
+              <NumberField
+                value={bg.radius}
+                min={0}
+                max={2}
+                step={0.05}
+                title="Corner roundness, in multiples of the text height."
+                onChange={(v) => setBackground({ radius: Math.min(Math.max(v, 0), 2) })}
+              />
+            </Row>
+          </>
+        )}
+        <Row label="Shadow">
+          <Toggle
+            checked={!!shadow}
+            onChange={(on) =>
+              editObject<'text'>(obj.id, (o) => {
+                o.shadow = on ? { color: '#000000', opacity: 0.6, offsetX: 0, offsetY: 0.08, blur: 0.15 } : null;
+              })
+            }
+          />
+        </Row>
+        {shadow && (
+          <>
+            <Row label="Shadow color">
+              <ColorField value={shadow.color} onChange={(v) => setShadow({ color: v })} />
+            </Row>
+            <Row label="Shadow opacity">
+              <NumberField
+                value={shadow.opacity}
+                min={0}
+                max={1}
+                step={0.01}
+                onChange={(v) => setShadow({ opacity: Math.min(Math.max(v, 0), 1) })}
+              />
+            </Row>
+            <Row label="Shadow drop">
+              <NumberField
+                value={shadow.offsetY}
+                min={-2}
+                max={2}
+                step={0.02}
+                title="How far the shadow falls below the text, in multiples of its height."
+                onChange={(v) => setShadow({ offsetY: Math.min(Math.max(v, -2), 2) })}
+              />
+            </Row>
+            <Row label="Shadow blur">
+              <NumberField
+                value={shadow.blur}
+                min={0}
+                max={2}
+                step={0.02}
+                onChange={(v) => setShadow({ blur: Math.min(Math.max(v, 0), 2) })}
+              />
+            </Row>
+          </>
+        )}
+        <p className="hint">
+          {screen
+            ? 'Pinned to the frame: camera moves and zooms do not move it. Only opacity can be animated.'
+            : 'A pill or shadow keeps light text readable over a busy page.'}
+        </p>
+      </Section>
+      <TransformSection obj={obj} time={time} opacityOnly={screen} />
     </>
   );
 }
@@ -448,6 +630,16 @@ function CursorProps({ obj, time }: { obj: CursorObject; time: number }) {
                 },
                 g ? `cursor-size:${obj.id}` : undefined,
               )
+            }
+          />
+        </Row>
+        <Row label="Same size when zoomed">
+          <Toggle
+            checked={obj.fixedScreenSize === true}
+            onChange={(v) =>
+              editObject<'cursor'>(obj.id, (o) => {
+                o.fixedScreenSize = v;
+              })
             }
           />
         </Row>
@@ -728,6 +920,23 @@ function KeysSection({ obj, time }: { obj: CursorObject; time: number }) {
 }
 
 function CameraProps({ obj, time }: { obj: CameraObject; time: number }) {
+  /** Where the cursor is on its page, in world units (panel transform applied). */
+  const aimAtCursor = (): void => {
+    const project = getEditor().project;
+    const cursor = project.objects.find((o): o is CursorObject => o.kind === 'cursor' && o.visible);
+    if (!cursor) return;
+    const panel = project.objects.find((o): o is WebsiteObject => o.kind === 'website' && o.id === cursor.targetId);
+    if (!panel) return;
+    const [px, py] = sample(cursor.position, time);
+    const w = PANEL_WIDTH;
+    const h = (w * panel.viewport.height) / panel.viewport.width;
+    const point = new THREE.Vector3((px / panel.viewport.width - 0.5) * w, (0.5 - py / panel.viewport.height) * h, 0);
+    const t = evaluateTransform(panel.transform, time);
+    point.multiply(new THREE.Vector3(t.scale[0], t.scale[1], t.scale[2]));
+    point.applyEuler(new THREE.Euler(t.rotation[0] * DEG, t.rotation[1] * DEG, t.rotation[2] * DEG));
+    point.add(new THREE.Vector3(t.position[0], t.position[1], t.position[2]));
+    setAnimated(obj.id, 'target', [point.x, point.y, point.z], false);
+  };
   return (
     <Section title="Camera">
       <VecRow
@@ -755,8 +964,14 @@ function CameraProps({ obj, time }: { obj: CameraObject; time: number }) {
         keyState={keyState(obj.zoom, time)}
         onToggleKey={() => toggleKey(obj.id, 'zoom')}
       />
+      <Row label="Framing">
+        <button onClick={aimAtCursor} title="Move 'Look at' to the spot under the cursor, so it sits in the middle">
+          Aim at the cursor
+        </button>
+      </Row>
       <p className="hint">
-        The camera stays still unless you add keyframes. Try the presets in the Animation tab for zooms and pans.
+        The camera stays still unless you add keyframes. Try the presets in the Animation tab for zooms and pans;{' '}
+        <em>Aim at the cursor</em> centres whatever the cursor points at, then raise Zoom to close in.
       </p>
     </Section>
   );

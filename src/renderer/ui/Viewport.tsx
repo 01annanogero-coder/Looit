@@ -270,9 +270,12 @@ export function Viewport({ readOnly = false }: { readOnly?: boolean }) {
       view.sync(cur.project, cur.time, { selectedId: cur.selectedId, showHelpers: true });
 
       // Attach the gizmo to the selected object (not while dragging, so its
-      // reference transform stays stable).
+      // reference transform stays stable). Screen-space text has no scene
+      // transform to drag, so it gets no gizmo.
+      const selected = cur.project.objects.find((o) => o.id === cur.selectedId);
+      const pinnedText = selected?.kind === 'text' && selected.space === 'screen';
       const target =
-        cur.tool === 'select' && !cur.playing && cur.selectedId && !useModal.getState().kind
+        cur.tool === 'select' && !cur.playing && cur.selectedId && !pinnedText && !useModal.getState().kind
           ? view.object3D(cur.selectedId)
           : null;
       if (!dragging && controls.object !== (target ?? undefined)) {

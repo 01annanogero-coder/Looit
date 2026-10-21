@@ -153,7 +153,7 @@ validate_project { project } checks any project JSON with the same rules as set_
 
 ## Limits to know
 - Embedded videos and some canvas or WebGL graphics run on their own clock and are not frame-exact.
-- Native browser popups (a \`<select>\` dropdown, autofill, file pickers, native context menus) are separate windows and never appear in a frame. Pick options with keyboard presses (click the select, then ArrowDown and Enter) or avoid those fields.
+- Looit draws its own list for native select elements: a click opens it inside the page, clicking an entry (or the arrow keys and Enter) picks it, so dropdowns appear in the preview and the export. File pickers, autofill and native context menus are separate windows and still never appear in a frame.
 - The studio preview and the export now step the page the same way, but the preview is built live: use render_frame when a frame has to be exact (scroll landing, reveal animations, hover swaps).
 - Exports take time: roughly 1-3x the video length at 720p30, and about twice that at 60 fps. Pages that animate constantly can't skip frames.
 - One export or Save dialog runs at a time. set_project and patch_project are refused while exporting.

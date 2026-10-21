@@ -180,15 +180,15 @@ export class SceneView {
   }
 
   /** Website panel meshes, for raycasting. */
-  /** Meshes that select an object when clicked. `page`: the website itself (clicks can go to the site). */
-  pickables(): { id: string; mesh: THREE.Mesh; page?: boolean }[] {
-    const out: { id: string; mesh: THREE.Mesh; page?: boolean }[] = [];
+  /** Objects that select themselves when clicked. `page`: the website itself (clicks can go to the site). */
+  pickables(): { id: string; mesh: THREE.Object3D; page?: boolean }[] {
+    const out: { id: string; mesh: THREE.Object3D; page?: boolean }[] = [];
     for (const [id, n] of this.nodes) {
       if (n.kind === 'website' && n.group.visible) {
         out.push({ id, mesh: n.panel, page: true });
         if (n.bar.visible) out.push({ id, mesh: n.bar });
       }
-      if (n.kind === 'text' && n.group.visible && !n.screen) out.push({ id, mesh: n.mesh as THREE.Mesh });
+      if (n.kind === 'text' && n.group.visible) out.push({ id, mesh: n.mesh });
     }
     return out;
   }

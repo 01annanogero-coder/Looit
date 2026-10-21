@@ -110,6 +110,152 @@ const STEP_ANIMATIONS = (dt: number) => `(() => {
   }
 })()`;
 
+/**
+ * A small in-page dropdown for native <select> elements.
+ *
+ * A real <select> opens an OS-level popup, which never appears in the offscreen
+ * page Looit captures (preview or export). This replaces that popup with a DOM
+ * list drawn inside the page: a click opens it, clicking an option sets the
+ * value and fires input/change, and arrow keys + Enter/Escape work. Because it
+ * is part of the page, the preview, the export and the editor's Interact mode
+ * all show the same thing.
+ */
+const SELECT_MENU_SCRIPT = `(() => {
+  if (window.__looitSelectMenu) return;
+  Object.defineProperty(window, '__looitSelectMenu', { value: true });
+
+  const STYLE_ID = 'looit-select-menu-style';
+  let menu = null;
+  let target = null;
+  let highlighted = -1;
+
+  const ensureStyle = () => {
+    if (document.getElementById(STYLE_ID)) return;
+    const style = document.createElement('style');
+    style.id = STYLE_ID;
+    style.textContent =
+      '.__looit-menu{position:fixed;z-index:2147483647;min-width:140px;max-height:280px;overflow:auto;' +
+      'background:#fff;color:#111;border:1px solid #c9cdd6;border-radius:8px;' +
+      'box-shadow:0 12px 30px rgba(0,0,0,.22);font:13px/1.35 "Segoe UI",system-ui,sans-serif;padding:4px}' +
+      '.__looit-menu div{padding:6px 10px;border-radius:5px;white-space:nowrap;overflow:hidden;' +
+      'text-overflow:ellipsis;cursor:default}' +
+      '.__looit-menu div.hl{background:#4f46e5;color:#fff}' +
+      '.__looit-menu div:not(.hl):hover{background:#eef0f6}';
+    document.documentElement.appendChild(style);
+  };
+
+  const close = () => {
+    if (menu) menu.remove();
+    menu = null;
+    target = null;
+    highlighted = -1;
+  };
+
+  const choose = (index) => {
+    const select = target;
+    if (!select) return;
+    const options = Array.from(select.options).filter((o) => !o.disabled);
+    const option = options[index];
+    if (!option) return close();
+    select.value = option.value;
+    select.dispatchEvent(new Event('input', { bubbles: true }));
+    select.dispatchEvent(new Event('change', { bubbles: true }));
+    close();
+  };
+
+  const highlight = (index) => {
+    if (!menu) return;
+    const items = Array.from(menu.children);
+    if (items.length === 0) return;
+    highlighted = Math.max(0, Math.min(index, items.length - 1));
+    items.forEach((item, i) => item.classList.toggle('hl', i === highlighted));
+    items[highlighted].scrollIntoView({ block: 'nearest' });
+  };
+
+  const open = (select) => {
+    ensureStyle();
+    const options = Array.from(select.options).filter((o) => !o.disabled);
+    if (options.length === 0) return;
+    target = select;
+    menu = document.createElement('div');
+    menu.className = '__looit-menu';
+    menu.setAttribute('role', 'listbox');
+    options.forEach((option, i) => {
+      const item = document.createElement('div');
+      item.setAttribute('role', 'option');
+      item.dataset.index = String(i);
+      item.textContent = option.label || option.textContent || option.value;
+      menu.appendChild(item);
+    });
+    const rect = select.getBoundingClientRect();
+    document.documentElement.appendChild(menu);
+    const roomBelow = window.innerHeight - rect.bottom;
+    const height = Math.min(menu.offsetHeight, 280);
+    menu.style.left = Math.max(4, Math.min(rect.left, window.innerWidth - menu.offsetWidth - 4)) + 'px';
+    menu.style.top =
+      (roomBelow > height + 8 ? rect.bottom + 2 : Math.max(4, rect.top - height - 2)) + 'px';
+    const selected = Array.from(select.options).indexOf(select.selectedOptions[0]);
+    const enabledOptions = Array.from(select.options);
+    highlight(selected >= 0 ? Math.max(0, options.indexOf(enabledOptions[selected])) : 0);
+  };
+
+  // Capture phase: take the click before the page (or Chromium) opens a native popup.
+  document.addEventListener(
+    'pointerdown',
+    (event) => {
+      const el = event.target && event.target.closest ? event.target.closest('select') : null;
+      if (el && !el.disabled && el.size <= 1 && el.options.length > 0) {
+        event.preventDefault();
+        event.stopPropagation();
+        el.focus({ preventScroll: true });
+        if (target === el) close();
+        else {
+          close();
+          open(el);
+        }
+        return;
+      }
+      if (!menu) return;
+      const item = event.target.closest ? event.target.closest('.__looit-menu div') : null;
+      if (item) {
+        event.preventDefault();
+        event.stopPropagation();
+        choose(Number(item.dataset.index));
+        return;
+      }
+      if (!menu.contains(event.target)) close();
+    },
+    true,
+  );
+
+  document.addEventListener(
+    'keydown',
+    (event) => {
+      if (!menu) return;
+      if (event.key === 'ArrowDown') {
+        event.preventDefault();
+        event.stopPropagation();
+        highlight(highlighted + 1);
+      } else if (event.key === 'ArrowUp') {
+        event.preventDefault();
+        event.stopPropagation();
+        highlight(highlighted - 1);
+      } else if (event.key === 'Enter' || event.key === ' ') {
+        event.preventDefault();
+        event.stopPropagation();
+        choose(highlighted);
+      } else if (event.key === 'Escape') {
+        event.preventDefault();
+        event.stopPropagation();
+        close();
+      }
+    },
+    true,
+  );
+  window.addEventListener('scroll', close, true);
+  window.addEventListener('blur', close);
+})();`;
+
 /** DevTools network events that mean the page may be about to change. */
 const NETWORK_ACTIVITY = new Set([
   'Network.requestWillBeSent',
@@ -294,6 +440,7 @@ export class SitePage {
     if (!this.rafClockInstalled) {
       await this.send('Page.enable');
       await this.send('Page.addScriptToEvaluateOnNewDocument', { source: RAF_CLOCK_SCRIPT });
+      await this.send('Page.addScriptToEvaluateOnNewDocument', { source: SELECT_MENU_SCRIPT });
       this.rafClockInstalled = true;
     }
     await this.send('Emulation.setVirtualTimePolicy', { policy: 'pause', initialVirtualTime: epochMs / 1000 });

@@ -261,9 +261,14 @@ function registerIpc(): void {
       let target: string;
       // Development only: automated tests of the AI connection export without a dialog.
       const aiTestDir = ws.kind === 'studio' && !app.isPackaged ? process.env.LOOIT_AI_TEST_EXPORT_DIR : undefined;
+      // Development only: the same for editor exports (end-to-end tests of the Export button).
+      const editorTestDir = ws.kind === 'editor' && !app.isPackaged ? process.env.LOOIT_TEST_EXPORT_DIR : undefined;
       if (aiTestDir) {
         await fs.mkdir(aiTestDir, { recursive: true });
         target = path.join(aiTestDir, `${safeName}.mp4`);
+      } else if (editorTestDir) {
+        await fs.mkdir(editorTestDir, { recursive: true });
+        target = path.join(editorTestDir, `${safeName}.mp4`);
       } else if (selfTestOut && ws.kind === 'editor') {
         await fs.mkdir(selfTestOut, { recursive: true });
         target = path.join(selfTestOut, 'export.mp4');

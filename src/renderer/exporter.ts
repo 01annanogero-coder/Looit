@@ -196,10 +196,12 @@ export async function exportVideo(ctx: ExportContext): Promise<void> {
         if (step.url && !step.url.startsWith('about:')) view.pageUrls.set(websiteId, step.url);
         if (step.reused && ctx.stats) ctx.stats.reused++;
       }
-      const step = panels[0].step;
+      // A project whose panels are all blank has no website frames: the card
+      // itself is the picture.
+      const step = panels[0]?.step;
       view.sync(project, t, { selectedId: null, showHelpers: false });
       renderer.render(view.scene, view.camera);
-      ctx.onFrameRendered?.(n, step);
+      if (step) ctx.onFrameRendered?.(n, step);
       const t2 = performance.now();
       await source.add(t, 1 / fps);
       if (ctx.stats) {
