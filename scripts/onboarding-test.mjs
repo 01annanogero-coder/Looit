@@ -189,17 +189,21 @@ try {
   );
   check('pinning marks the row', await waitFor(ed, `!!document.querySelector('.project-row.pinned')`, 8000));
 
-  // 5. The demo project opens the electronjs.org project.
+  // 5. The demo opens the tour bundled with the app.
   await ed.ev(`document.querySelector('.demo-card').click()`);
   check('demo opens the editor', await waitFor(ed, `!!document.querySelector('.app')`, 20_000));
-  const demoUrl = await ed.ev(
-    `(() => { const w = window.__looitEditor.getState().project.objects.find(o => o.kind === 'website'); return w && w.url; })()`,
-  );
+  const demo = await ed.ev(`(() => {
+    const p = window.__looitEditor.getState().project;
+    const w = p.objects.find(o => o.kind === 'website');
+    return { name: p.name, url: w && w.url, texts: p.objects.filter(o => o.kind === 'text').length };
+  })()`);
+  check('demo opens the bundled tour', demo?.name === 'Annan Digital Labs', String(demo?.name));
   check(
-    'demo shows electronjs.org',
-    typeof demoUrl === 'string' && demoUrl.includes('electronjs.org'),
-    String(demoUrl),
+    'the tour shows annandigitallabs.com',
+    typeof demo?.url === 'string' && demo.url.includes('annandigitallabs.com'),
+    String(demo?.url),
   );
+  check('the tour keeps its captions', demo?.texts >= 5, String(demo?.texts));
   const demoFile = await ed.ev(`window.__looitEditor.getState().filePath`);
   check(
     'demo has its own project file',
@@ -219,14 +223,15 @@ try {
     (await ed.ev(`window.__looitEditor.getState().project.name`)) === 'Renamed test',
   );
 
-  // 7. Delete both test projects (confirmation is auto-accepted).
+  // 7. Delete everything this test created (confirmation is auto-accepted).
   await ed.ev(`document.querySelector('.topbar-actions button[title="Back to your projects"]').click()`);
   await waitFor(ed, `!!document.querySelector('.home')`, 15_000);
   await ed.ev(`window.confirm = () => true`);
-  for (const name of ['Renamed test', 'Demo project']) {
-    await ed.ev(
-      `(() => { const row = [...document.querySelectorAll('.project-row')].find(r => r.textContent.includes(${JSON.stringify(name)})); if (row) row.querySelector('button[title="Delete"]').click(); })()`,
+  for (let i = 0; i < 5; i++) {
+    const clicked = await ed.ev(
+      `(() => { const row = document.querySelector('.project-row'); if (!row) return false; row.querySelector('button[title="Delete"]').click(); return true; })()`,
     );
+    if (!clicked) break;
     await sleep(700);
   }
   check(

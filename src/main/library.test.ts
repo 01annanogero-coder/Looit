@@ -4,7 +4,7 @@ import path from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { newProject } from '../engine/project';
 import { parseProject } from '../engine/schema';
-import { DEMO_NAME, Library, sanitizeName, sortEntries, uniqueFileName } from './library';
+import { Library, sanitizeName, sortEntries, uniqueFileName } from './library';
 
 describe('name and ordering helpers', () => {
   it('makes a project name safe to use as a file name', () => {
@@ -40,6 +40,7 @@ describe('Library', () => {
     lib = new Library({
       indexFile: path.join(dir, 'state', 'projects.json'),
       folder: path.join(dir, 'Looit'),
+      demoFile: path.resolve('assets', 'demo.looit'),
       trash: async (file) => {
         trashed.push(file);
         await fs.rm(file, { force: true });
@@ -106,17 +107,43 @@ describe('Library', () => {
     await expect(fs.stat(created.entry.path)).rejects.toThrow();
   });
 
-  it('creates the demo project once and reuses it', async () => {
+  it('opens the bundled demo tour and reuses the copy', async () => {
+    const bundle = await fs.readFile(path.resolve('assets', 'demo.looit'), 'utf8');
     const demo = await lib.demo();
-    expect(demo.entry.name).toBe(DEMO_NAME);
+    expect(demo.text).toBe(bundle);
+    expect(demo.entry.name).toBe(parseProject(bundle).name);
     expect(demo.entry.exists).toBe(true);
-    expect(parseProject(demo.text).name).toBe(DEMO_NAME);
     const again = await lib.demo();
     expect(again.entry.id).toBe(demo.entry.id);
     const snapshot = await lib.snapshot();
     expect(snapshot.demo?.id).toBe(demo.entry.id);
     // It is also a normal project row, so the user can rename or delete it.
     expect(snapshot.entries.map((e) => e.id)).toContain(demo.entry.id);
+  });
+
+  it('keeps edits to the demo until the bundled tour changes', async () => {
+    const demo = await lib.demo();
+    const edited = parseProject(demo.text);
+    edited.name = 'My edited demo';
+    await fs.writeFile(demo.entry.path, JSON.stringify(edited), 'utf8');
+    const stillEdited = await lib.demo();
+    expect(parseProject(stillEdited.text).name).toBe('My edited demo');
+
+    // A different bundle replaces the copy (so a new build's tour wins).
+    const bundle2 = path.join(dir, 'bundle2.looit');
+    const project = parseProject(await fs.readFile(path.resolve('assets', 'demo.looit'), 'utf8'));
+    project.name = 'New tour';
+    await fs.writeFile(bundle2, JSON.stringify(project), 'utf8');
+    const lib2 = new Library({
+      indexFile: path.join(dir, 'state', 'projects.json'),
+      folder: path.join(dir, 'Looit'),
+      demoFile: bundle2,
+      trash: async () => {},
+    });
+    const replaced = await lib2.demo();
+    expect(parseProject(replaced.text).name).toBe('New tour');
+    expect(replaced.entry.name).toBe('New tour');
+    expect(replaced.entry.id).toBe(demo.entry.id);
   });
 
   it('indexes a file the user opened, and notes saves', async () => {
@@ -142,6 +169,7 @@ describe('Library', () => {
     const broken = new Library({
       indexFile: path.join(dir, 'state', 'broken.json'),
       folder: path.join(dir, 'Looit'),
+      demoFile: path.resolve('assets', 'demo.looit'),
       trash: async () => {},
     });
     await fs.mkdir(path.join(dir, 'state'), { recursive: true });

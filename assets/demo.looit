@@ -1,0 +1,1782 @@
+{
+  "format": "looit-project",
+  "version": 1,
+  "name": "Annan Digital Labs",
+  "duration": 52,
+  "output": {
+    "width": 1280,
+    "height": 720,
+    "fps": 30
+  },
+  "background": "#0f172a",
+  "environment": {
+    "background": "gradient",
+    "gradientTo": "#1e3a5f",
+    "gradientAngle": 90,
+    "image": null,
+    "floor": "reflection",
+    "floorY": -5.2,
+    "floorColor": "#111827"
+  },
+  "objects": [
+    {
+      "id": "camera-mvg91uky-2-fhyq",
+      "name": "Camera",
+      "visible": true,
+      "kind": "camera",
+      "position": {
+        "value": [
+          0,
+          0,
+          24
+        ],
+        "keyframes": [
+          {
+            "id": "k1",
+            "time": 0,
+            "value": [
+              0,
+              0,
+              24
+            ],
+            "easing": "easeInOut"
+          },
+          {
+            "id": "k2",
+            "time": 2.2,
+            "value": [
+              0,
+              0,
+              24
+            ],
+            "easing": "easeInOut"
+          },
+          {
+            "id": "k3",
+            "time": 2.4,
+            "value": [
+              0,
+              0,
+              24
+            ],
+            "easing": "easeInOut"
+          },
+          {
+            "id": "k4",
+            "time": 3.2,
+            "value": [
+              -0.6,
+              2.4,
+              24
+            ],
+            "easing": "easeInOut"
+          },
+          {
+            "id": "k5",
+            "time": 5.2,
+            "value": [
+              -0.6,
+              2.4,
+              24
+            ],
+            "easing": "easeInOut"
+          },
+          {
+            "id": "k6",
+            "time": 6,
+            "value": [
+              0,
+              0,
+              24
+            ],
+            "easing": "easeInOut"
+          },
+          {
+            "id": "k7",
+            "time": 27,
+            "value": [
+              0,
+              0,
+              24
+            ],
+            "easing": "easeInOut"
+          },
+          {
+            "id": "k8",
+            "time": 28.2,
+            "value": [
+              4.16,
+              -0.75,
+              24
+            ],
+            "easing": "easeInOut"
+          },
+          {
+            "id": "k9",
+            "time": 29,
+            "value": [
+              2.68,
+              1.65,
+              24
+            ],
+            "easing": "easeInOut"
+          },
+          {
+            "id": "k10",
+            "time": 31.1,
+            "value": [
+              2.68,
+              1.65,
+              24
+            ],
+            "easing": "easeInOut"
+          },
+          {
+            "id": "k11",
+            "time": 31.8,
+            "value": [
+              5.55,
+              1.65,
+              24
+            ],
+            "easing": "easeInOut"
+          },
+          {
+            "id": "k12",
+            "time": 33.9,
+            "value": [
+              5.55,
+              1.65,
+              24
+            ],
+            "easing": "easeInOut"
+          },
+          {
+            "id": "k13",
+            "time": 34.6,
+            "value": [
+              2.68,
+              0.65,
+              24
+            ],
+            "easing": "easeInOut"
+          },
+          {
+            "id": "k14",
+            "time": 36.8,
+            "value": [
+              2.68,
+              0.65,
+              24
+            ],
+            "easing": "easeInOut"
+          },
+          {
+            "id": "k15",
+            "time": 37.5,
+            "value": [
+              5.55,
+              0.65,
+              24
+            ],
+            "easing": "easeInOut"
+          },
+          {
+            "id": "k16",
+            "time": 39.6,
+            "value": [
+              5.55,
+              0.65,
+              24
+            ],
+            "easing": "easeInOut"
+          },
+          {
+            "id": "k17",
+            "time": 40.4,
+            "value": [
+              4.12,
+              -1.65,
+              24
+            ],
+            "easing": "easeInOut"
+          },
+          {
+            "id": "k18",
+            "time": 43.9,
+            "value": [
+              4.12,
+              -1.65,
+              24
+            ],
+            "easing": "easeInOut"
+          },
+          {
+            "id": "k19",
+            "time": 44.7,
+            "value": [
+              2.66,
+              -2.85,
+              24
+            ],
+            "easing": "easeInOut"
+          },
+          {
+            "id": "k20",
+            "time": 46.1,
+            "value": [
+              2.66,
+              -2.85,
+              24
+            ],
+            "easing": "easeInOut"
+          },
+          {
+            "id": "k21",
+            "time": 47.6,
+            "value": [
+              0,
+              0,
+              24
+            ],
+            "easing": "easeInOut"
+          },
+          {
+            "id": "k22",
+            "time": 51,
+            "value": [
+              0,
+              0,
+              24
+            ],
+            "easing": "easeInOut"
+          }
+        ]
+      },
+      "target": {
+        "value": [
+          0,
+          0,
+          0
+        ],
+        "keyframes": [
+          {
+            "id": "k23",
+            "time": 0,
+            "value": [
+              0,
+              0,
+              0
+            ],
+            "easing": "easeInOut"
+          },
+          {
+            "id": "k24",
+            "time": 2.2,
+            "value": [
+              0,
+              0,
+              0
+            ],
+            "easing": "easeInOut"
+          },
+          {
+            "id": "k25",
+            "time": 2.4,
+            "value": [
+              0,
+              0,
+              0
+            ],
+            "easing": "easeInOut"
+          },
+          {
+            "id": "k26",
+            "time": 3.2,
+            "value": [
+              -0.6,
+              2.4,
+              0
+            ],
+            "easing": "easeInOut"
+          },
+          {
+            "id": "k27",
+            "time": 5.2,
+            "value": [
+              -0.6,
+              2.4,
+              0
+            ],
+            "easing": "easeInOut"
+          },
+          {
+            "id": "k28",
+            "time": 6,
+            "value": [
+              0,
+              0,
+              0
+            ],
+            "easing": "easeInOut"
+          },
+          {
+            "id": "k29",
+            "time": 27,
+            "value": [
+              0,
+              0,
+              0
+            ],
+            "easing": "easeInOut"
+          },
+          {
+            "id": "k30",
+            "time": 28.2,
+            "value": [
+              4.16,
+              -0.75,
+              0
+            ],
+            "easing": "easeInOut"
+          },
+          {
+            "id": "k31",
+            "time": 29,
+            "value": [
+              2.68,
+              1.65,
+              0
+            ],
+            "easing": "easeInOut"
+          },
+          {
+            "id": "k32",
+            "time": 31.1,
+            "value": [
+              2.68,
+              1.65,
+              0
+            ],
+            "easing": "easeInOut"
+          },
+          {
+            "id": "k33",
+            "time": 31.8,
+            "value": [
+              5.55,
+              1.65,
+              0
+            ],
+            "easing": "easeInOut"
+          },
+          {
+            "id": "k34",
+            "time": 33.9,
+            "value": [
+              5.55,
+              1.65,
+              0
+            ],
+            "easing": "easeInOut"
+          },
+          {
+            "id": "k35",
+            "time": 34.6,
+            "value": [
+              2.68,
+              0.65,
+              0
+            ],
+            "easing": "easeInOut"
+          },
+          {
+            "id": "k36",
+            "time": 36.8,
+            "value": [
+              2.68,
+              0.65,
+              0
+            ],
+            "easing": "easeInOut"
+          },
+          {
+            "id": "k37",
+            "time": 37.5,
+            "value": [
+              5.55,
+              0.65,
+              0
+            ],
+            "easing": "easeInOut"
+          },
+          {
+            "id": "k38",
+            "time": 39.6,
+            "value": [
+              5.55,
+              0.65,
+              0
+            ],
+            "easing": "easeInOut"
+          },
+          {
+            "id": "k39",
+            "time": 40.4,
+            "value": [
+              4.12,
+              -1.65,
+              0
+            ],
+            "easing": "easeInOut"
+          },
+          {
+            "id": "k40",
+            "time": 43.9,
+            "value": [
+              4.12,
+              -1.65,
+              0
+            ],
+            "easing": "easeInOut"
+          },
+          {
+            "id": "k41",
+            "time": 44.7,
+            "value": [
+              2.66,
+              -2.85,
+              0
+            ],
+            "easing": "easeInOut"
+          },
+          {
+            "id": "k42",
+            "time": 46.1,
+            "value": [
+              2.66,
+              -2.85,
+              0
+            ],
+            "easing": "easeInOut"
+          },
+          {
+            "id": "k43",
+            "time": 47.6,
+            "value": [
+              0,
+              0,
+              0
+            ],
+            "easing": "easeInOut"
+          },
+          {
+            "id": "k44",
+            "time": 51,
+            "value": [
+              0,
+              0,
+              0
+            ],
+            "easing": "easeInOut"
+          }
+        ]
+      },
+      "zoom": {
+        "value": 1,
+        "keyframes": [
+          {
+            "id": "k45",
+            "time": 0,
+            "value": 0.9,
+            "easing": "easeInOut"
+          },
+          {
+            "id": "k46",
+            "time": 2.2,
+            "value": 1,
+            "easing": "easeInOut"
+          },
+          {
+            "id": "k47",
+            "time": 2.4,
+            "value": 1,
+            "easing": "easeInOut"
+          },
+          {
+            "id": "k48",
+            "time": 3.2,
+            "value": 1.75,
+            "easing": "easeInOut"
+          },
+          {
+            "id": "k49",
+            "time": 5.2,
+            "value": 1.75,
+            "easing": "easeInOut"
+          },
+          {
+            "id": "k50",
+            "time": 6,
+            "value": 1,
+            "easing": "easeInOut"
+          },
+          {
+            "id": "k51",
+            "time": 27,
+            "value": 1,
+            "easing": "easeInOut"
+          },
+          {
+            "id": "k52",
+            "time": 28.2,
+            "value": 2,
+            "easing": "easeInOut"
+          },
+          {
+            "id": "k53",
+            "time": 29,
+            "value": 3.6,
+            "easing": "easeInOut"
+          },
+          {
+            "id": "k54",
+            "time": 31.1,
+            "value": 3.6,
+            "easing": "easeInOut"
+          },
+          {
+            "id": "k55",
+            "time": 31.8,
+            "value": 3.6,
+            "easing": "easeInOut"
+          },
+          {
+            "id": "k56",
+            "time": 33.9,
+            "value": 3.6,
+            "easing": "easeInOut"
+          },
+          {
+            "id": "k57",
+            "time": 34.6,
+            "value": 3.6,
+            "easing": "easeInOut"
+          },
+          {
+            "id": "k58",
+            "time": 36.8,
+            "value": 3.6,
+            "easing": "easeInOut"
+          },
+          {
+            "id": "k59",
+            "time": 37.5,
+            "value": 3.6,
+            "easing": "easeInOut"
+          },
+          {
+            "id": "k60",
+            "time": 39.6,
+            "value": 3.6,
+            "easing": "easeInOut"
+          },
+          {
+            "id": "k61",
+            "time": 40.4,
+            "value": 2.8,
+            "easing": "easeInOut"
+          },
+          {
+            "id": "k62",
+            "time": 43.9,
+            "value": 2.8,
+            "easing": "easeInOut"
+          },
+          {
+            "id": "k63",
+            "time": 44.7,
+            "value": 2.5,
+            "easing": "easeInOut"
+          },
+          {
+            "id": "k64",
+            "time": 46.1,
+            "value": 2.5,
+            "easing": "easeInOut"
+          },
+          {
+            "id": "k65",
+            "time": 47.6,
+            "value": 1,
+            "easing": "easeInOut"
+          },
+          {
+            "id": "k66",
+            "time": 51,
+            "value": 1,
+            "easing": "easeInOut"
+          }
+        ]
+      }
+    },
+    {
+      "id": "website-mvg91uky-1-s1x3",
+      "name": "Website Panel",
+      "visible": true,
+      "kind": "website",
+      "url": "https://annandigitallabs.com",
+      "viewport": {
+        "width": 1280,
+        "height": 720
+      },
+      "interactive": true,
+      "transform": {
+        "position": {
+          "value": [
+            0,
+            0,
+            0
+          ],
+          "keyframes": []
+        },
+        "rotation": {
+          "value": [
+            0,
+            0,
+            0
+          ],
+          "keyframes": [
+            {
+              "id": "k67",
+              "time": 0,
+              "value": [
+                0,
+                38,
+                0
+              ],
+              "easing": "easeInOut"
+            },
+            {
+              "id": "k68",
+              "time": 2.2,
+              "value": [
+                0,
+                0,
+                0
+              ],
+              "easing": "easeInOut"
+            },
+            {
+              "id": "k69",
+              "time": 5.8,
+              "value": [
+                0,
+                0,
+                0
+              ],
+              "easing": "easeInOut"
+            },
+            {
+              "id": "k70",
+              "time": 7.4,
+              "value": [
+                0,
+                -16,
+                0
+              ],
+              "easing": "easeInOut"
+            },
+            {
+              "id": "k71",
+              "time": 10.2,
+              "value": [
+                0,
+                -16,
+                0
+              ],
+              "easing": "easeInOut"
+            },
+            {
+              "id": "k72",
+              "time": 11.8,
+              "value": [
+                0,
+                14,
+                0
+              ],
+              "easing": "easeInOut"
+            },
+            {
+              "id": "k73",
+              "time": 14.6,
+              "value": [
+                0,
+                14,
+                0
+              ],
+              "easing": "easeInOut"
+            },
+            {
+              "id": "k74",
+              "time": 16.2,
+              "value": [
+                6,
+                -12,
+                0
+              ],
+              "easing": "easeInOut"
+            },
+            {
+              "id": "k75",
+              "time": 19,
+              "value": [
+                6,
+                -12,
+                0
+              ],
+              "easing": "easeInOut"
+            },
+            {
+              "id": "k76",
+              "time": 20.6,
+              "value": [
+                -4,
+                8,
+                0
+              ],
+              "easing": "easeInOut"
+            },
+            {
+              "id": "k77",
+              "time": 23.4,
+              "value": [
+                -4,
+                8,
+                0
+              ],
+              "easing": "easeInOut"
+            },
+            {
+              "id": "k78",
+              "time": 25.6,
+              "value": [
+                0,
+                -28,
+                0
+              ],
+              "easing": "easeInOut"
+            },
+            {
+              "id": "k79",
+              "time": 27.4,
+              "value": [
+                0,
+                0,
+                0
+              ],
+              "easing": "easeInOut"
+            },
+            {
+              "id": "k80",
+              "time": 46.2,
+              "value": [
+                0,
+                0,
+                0
+              ],
+              "easing": "easeInOut"
+            },
+            {
+              "id": "k81",
+              "time": 47.8,
+              "value": [
+                0,
+                -14,
+                0
+              ],
+              "easing": "easeInOut"
+            },
+            {
+              "id": "k82",
+              "time": 49.4,
+              "value": [
+                0,
+                10,
+                0
+              ],
+              "easing": "easeInOut"
+            },
+            {
+              "id": "k83",
+              "time": 51,
+              "value": [
+                0,
+                0,
+                0
+              ],
+              "easing": "easeInOut"
+            }
+          ]
+        },
+        "scale": {
+          "value": [
+            1,
+            1,
+            1
+          ],
+          "keyframes": []
+        },
+        "opacity": {
+          "value": 1,
+          "keyframes": [
+            {
+              "id": "k84",
+              "time": 0,
+              "value": 0,
+              "easing": "easeOut"
+            },
+            {
+              "id": "k85",
+              "time": 1,
+              "value": 1,
+              "easing": "easeInOut"
+            }
+          ]
+        }
+      },
+      "shadow": {
+        "enabled": true,
+        "color": "#000000",
+        "opacity": 0.5,
+        "blur": 1.2,
+        "offsetY": -0.35
+      },
+      "frame": "dark",
+      "cornerRadius": 14,
+      "border": {
+        "width": 0,
+        "color": "#ffffff"
+      }
+    },
+    {
+      "id": "cursor-mvg91ukz-a-b5sq",
+      "name": "Cursor",
+      "visible": true,
+      "kind": "cursor",
+      "targetId": "website-mvg91uky-1-s1x3",
+      "position": {
+        "value": [
+          640,
+          400
+        ],
+        "keyframes": [
+          {
+            "id": "k86",
+            "time": 0,
+            "value": [
+              1000,
+              620
+            ],
+            "easing": "easeInOut"
+          },
+          {
+            "id": "k87",
+            "time": 2.4,
+            "value": [
+              1000,
+              620
+            ],
+            "easing": "easeInOut"
+          },
+          {
+            "id": "k88",
+            "time": 3.1,
+            "value": [
+              545,
+              90
+            ],
+            "easing": "easeInOut"
+          },
+          {
+            "id": "k89",
+            "time": 5,
+            "value": [
+              545,
+              90
+            ],
+            "easing": "easeInOut"
+          },
+          {
+            "id": "k90",
+            "time": 5.7,
+            "value": [
+              1210,
+              420
+            ],
+            "easing": "easeInOut"
+          },
+          {
+            "id": "k91",
+            "time": 27.6,
+            "value": [
+              1210,
+              420
+            ],
+            "easing": "easeInOut"
+          },
+          {
+            "id": "k92",
+            "time": 28.9,
+            "value": [
+              855,
+              228
+            ],
+            "easing": "easeInOut"
+          },
+          {
+            "id": "k93",
+            "time": 31.1,
+            "value": [
+              855,
+              228
+            ],
+            "easing": "easeInOut"
+          },
+          {
+            "id": "k94",
+            "time": 31.8,
+            "value": [
+              1084,
+              228
+            ],
+            "easing": "easeInOut"
+          },
+          {
+            "id": "k95",
+            "time": 33.9,
+            "value": [
+              1084,
+              228
+            ],
+            "easing": "easeInOut"
+          },
+          {
+            "id": "k96",
+            "time": 34.6,
+            "value": [
+              855,
+              308
+            ],
+            "easing": "easeInOut"
+          },
+          {
+            "id": "k97",
+            "time": 36.8,
+            "value": [
+              855,
+              308
+            ],
+            "easing": "easeInOut"
+          },
+          {
+            "id": "k98",
+            "time": 37.5,
+            "value": [
+              1084,
+              308
+            ],
+            "easing": "easeInOut"
+          },
+          {
+            "id": "k99",
+            "time": 39.6,
+            "value": [
+              1084,
+              308
+            ],
+            "easing": "easeInOut"
+          },
+          {
+            "id": "k100",
+            "time": 40.4,
+            "value": [
+              970,
+              478
+            ],
+            "easing": "easeInOut"
+          },
+          {
+            "id": "k101",
+            "time": 43.9,
+            "value": [
+              970,
+              478
+            ],
+            "easing": "easeInOut"
+          },
+          {
+            "id": "k102",
+            "time": 44.7,
+            "value": [
+              853,
+              670
+            ],
+            "easing": "easeInOut"
+          },
+          {
+            "id": "k103",
+            "time": 46.1,
+            "value": [
+              853,
+              670
+            ],
+            "easing": "easeInOut"
+          },
+          {
+            "id": "k104",
+            "time": 47.5,
+            "value": [
+              1210,
+              420
+            ],
+            "easing": "easeInOut"
+          },
+          {
+            "id": "k105",
+            "time": 51,
+            "value": [
+              1210,
+              420
+            ],
+            "easing": "easeInOut"
+          }
+        ]
+      },
+      "size": 0.55,
+      "style": "arrow",
+      "clickColor": "#3b82f6",
+      "clicks": [
+        {
+          "id": "c0",
+          "time": 29.3
+        },
+        {
+          "id": "c1",
+          "time": 32
+        },
+        {
+          "id": "c2",
+          "time": 34.8
+        },
+        {
+          "id": "c3",
+          "time": 37.7
+        },
+        {
+          "id": "c4",
+          "time": 40.6
+        }
+      ],
+      "scrolls": [
+        {
+          "id": "s0",
+          "time": 6,
+          "deltaY": 525
+        },
+        {
+          "id": "s1",
+          "time": 6.6,
+          "deltaY": 525
+        },
+        {
+          "id": "s2",
+          "time": 10.4,
+          "deltaY": 510
+        },
+        {
+          "id": "s3",
+          "time": 11,
+          "deltaY": 510
+        },
+        {
+          "id": "s4",
+          "time": 14.8,
+          "deltaY": 415
+        },
+        {
+          "id": "s5",
+          "time": 15.4,
+          "deltaY": 415
+        },
+        {
+          "id": "s6",
+          "time": 19.2,
+          "deltaY": 495
+        },
+        {
+          "id": "s7",
+          "time": 19.8,
+          "deltaY": 495
+        },
+        {
+          "id": "s8",
+          "time": 23.6,
+          "deltaY": 800
+        },
+        {
+          "id": "s9",
+          "time": 24.1,
+          "deltaY": 800
+        },
+        {
+          "id": "s10",
+          "time": 24.6,
+          "deltaY": 800
+        },
+        {
+          "id": "s11",
+          "time": 25.1,
+          "deltaY": 800
+        },
+        {
+          "id": "s12",
+          "time": 25.6,
+          "deltaY": 800
+        },
+        {
+          "id": "s13",
+          "time": 26.1,
+          "deltaY": 800
+        },
+        {
+          "id": "s14",
+          "time": 26.6,
+          "deltaY": 260
+        }
+      ],
+      "keys": [
+        {
+          "id": "t0",
+          "time": 29.6,
+          "kind": "type",
+          "text": "Amina Wanjiru",
+          "cps": 10
+        },
+        {
+          "id": "t1",
+          "time": 32.3,
+          "kind": "type",
+          "text": "amina@example.com",
+          "cps": 12
+        },
+        {
+          "id": "t2",
+          "time": 35.1,
+          "kind": "type",
+          "text": "Savanna Retail Ltd",
+          "cps": 12
+        },
+        {
+          "id": "t3",
+          "time": 38,
+          "kind": "type",
+          "text": "+254 700 000 000",
+          "cps": 12
+        },
+        {
+          "id": "t4",
+          "time": 40.9,
+          "kind": "type",
+          "text": "We need a mobile app for our retail shop.",
+          "cps": 14
+        }
+      ]
+    },
+    {
+      "id": "text-1",
+      "name": "Caption 1",
+      "visible": true,
+      "kind": "text",
+      "text": "Annan Digital Labs",
+      "size": 1,
+      "color": "#ffffff",
+      "weight": 700,
+      "transform": {
+        "position": {
+          "value": [
+            0,
+            5.7,
+            1
+          ],
+          "keyframes": []
+        },
+        "rotation": {
+          "value": [
+            0,
+            0,
+            0
+          ],
+          "keyframes": []
+        },
+        "scale": {
+          "value": [
+            1,
+            1,
+            1
+          ],
+          "keyframes": []
+        },
+        "opacity": {
+          "value": 0,
+          "keyframes": [
+            {
+              "id": "k106",
+              "time": 0.5,
+              "value": 0,
+              "easing": "easeOut"
+            },
+            {
+              "id": "k107",
+              "time": 0.9,
+              "value": 1,
+              "easing": "linear"
+            },
+            {
+              "id": "k108",
+              "time": 2.8,
+              "value": 1,
+              "easing": "easeIn"
+            },
+            {
+              "id": "k109",
+              "time": 3.2,
+              "value": 0,
+              "easing": "linear"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "text-2",
+      "name": "Caption 2",
+      "visible": true,
+      "kind": "text",
+      "text": "Explore our services",
+      "size": 0.5,
+      "color": "#7dd3fc",
+      "weight": 700,
+      "transform": {
+        "position": {
+          "value": [
+            -0.6,
+            6,
+            1
+          ],
+          "keyframes": []
+        },
+        "rotation": {
+          "value": [
+            0,
+            0,
+            0
+          ],
+          "keyframes": []
+        },
+        "scale": {
+          "value": [
+            1,
+            1,
+            1
+          ],
+          "keyframes": []
+        },
+        "opacity": {
+          "value": 0,
+          "keyframes": [
+            {
+              "id": "k110",
+              "time": 3.3,
+              "value": 0,
+              "easing": "easeOut"
+            },
+            {
+              "id": "k111",
+              "time": 3.7,
+              "value": 1,
+              "easing": "linear"
+            },
+            {
+              "id": "k112",
+              "time": 5,
+              "value": 1,
+              "easing": "easeIn"
+            },
+            {
+              "id": "k113",
+              "time": 5.4,
+              "value": 0,
+              "easing": "linear"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "text-3",
+      "name": "Caption 3",
+      "visible": true,
+      "kind": "text",
+      "text": "Custom software & mobile apps",
+      "size": 0.65,
+      "color": "#ffffff",
+      "weight": 700,
+      "transform": {
+        "position": {
+          "value": [
+            0,
+            5.7,
+            1
+          ],
+          "keyframes": []
+        },
+        "rotation": {
+          "value": [
+            0,
+            0,
+            0
+          ],
+          "keyframes": []
+        },
+        "scale": {
+          "value": [
+            1,
+            1,
+            1
+          ],
+          "keyframes": []
+        },
+        "opacity": {
+          "value": 0,
+          "keyframes": [
+            {
+              "id": "k114",
+              "time": 6.4,
+              "value": 0,
+              "easing": "easeOut"
+            },
+            {
+              "id": "k115",
+              "time": 6.8,
+              "value": 1,
+              "easing": "linear"
+            },
+            {
+              "id": "k116",
+              "time": 9.6,
+              "value": 1,
+              "easing": "easeIn"
+            },
+            {
+              "id": "k117",
+              "time": 10,
+              "value": 0,
+              "easing": "linear"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "text-4",
+      "name": "Caption 4",
+      "visible": true,
+      "kind": "text",
+      "text": "Web, cloud, AI & more",
+      "size": 0.65,
+      "color": "#ffffff",
+      "weight": 700,
+      "transform": {
+        "position": {
+          "value": [
+            0,
+            5.7,
+            1
+          ],
+          "keyframes": []
+        },
+        "rotation": {
+          "value": [
+            0,
+            0,
+            0
+          ],
+          "keyframes": []
+        },
+        "scale": {
+          "value": [
+            1,
+            1,
+            1
+          ],
+          "keyframes": []
+        },
+        "opacity": {
+          "value": 0,
+          "keyframes": [
+            {
+              "id": "k118",
+              "time": 10.8,
+              "value": 0,
+              "easing": "easeOut"
+            },
+            {
+              "id": "k119",
+              "time": 11.2,
+              "value": 1,
+              "easing": "linear"
+            },
+            {
+              "id": "k120",
+              "time": 14,
+              "value": 1,
+              "easing": "easeIn"
+            },
+            {
+              "id": "k121",
+              "time": 14.4,
+              "value": 0,
+              "easing": "linear"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "text-5",
+      "name": "Caption 5",
+      "visible": true,
+      "kind": "text",
+      "text": "AI that powers smarter decisions",
+      "size": 0.65,
+      "color": "#ffffff",
+      "weight": 700,
+      "transform": {
+        "position": {
+          "value": [
+            0,
+            5.7,
+            1
+          ],
+          "keyframes": []
+        },
+        "rotation": {
+          "value": [
+            0,
+            0,
+            0
+          ],
+          "keyframes": []
+        },
+        "scale": {
+          "value": [
+            1,
+            1,
+            1
+          ],
+          "keyframes": []
+        },
+        "opacity": {
+          "value": 0,
+          "keyframes": [
+            {
+              "id": "k122",
+              "time": 15.2,
+              "value": 0,
+              "easing": "easeOut"
+            },
+            {
+              "id": "k123",
+              "time": 15.6,
+              "value": 1,
+              "easing": "linear"
+            },
+            {
+              "id": "k124",
+              "time": 18.4,
+              "value": 1,
+              "easing": "easeIn"
+            },
+            {
+              "id": "k125",
+              "time": 18.8,
+              "value": 0,
+              "easing": "linear"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "text-6",
+      "name": "Caption 6",
+      "visible": true,
+      "kind": "text",
+      "text": "From idea to impact",
+      "size": 0.65,
+      "color": "#ffffff",
+      "weight": 700,
+      "transform": {
+        "position": {
+          "value": [
+            0,
+            5.7,
+            1
+          ],
+          "keyframes": []
+        },
+        "rotation": {
+          "value": [
+            0,
+            0,
+            0
+          ],
+          "keyframes": []
+        },
+        "scale": {
+          "value": [
+            1,
+            1,
+            1
+          ],
+          "keyframes": []
+        },
+        "opacity": {
+          "value": 0,
+          "keyframes": [
+            {
+              "id": "k126",
+              "time": 19.6,
+              "value": 0,
+              "easing": "easeOut"
+            },
+            {
+              "id": "k127",
+              "time": 20,
+              "value": 1,
+              "easing": "linear"
+            },
+            {
+              "id": "k128",
+              "time": 22.8,
+              "value": 1,
+              "easing": "easeIn"
+            },
+            {
+              "id": "k129",
+              "time": 23.2,
+              "value": 0,
+              "easing": "linear"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "text-7",
+      "name": "Caption 7",
+      "visible": true,
+      "kind": "text",
+      "text": "Let's build something great",
+      "size": 0.65,
+      "color": "#7dd3fc",
+      "weight": 700,
+      "transform": {
+        "position": {
+          "value": [
+            0,
+            5.7,
+            1
+          ],
+          "keyframes": []
+        },
+        "rotation": {
+          "value": [
+            0,
+            0,
+            0
+          ],
+          "keyframes": []
+        },
+        "scale": {
+          "value": [
+            1,
+            1,
+            1
+          ],
+          "keyframes": []
+        },
+        "opacity": {
+          "value": 0,
+          "keyframes": [
+            {
+              "id": "k130",
+              "time": 23.8,
+              "value": 0,
+              "easing": "easeOut"
+            },
+            {
+              "id": "k131",
+              "time": 24.2,
+              "value": 1,
+              "easing": "linear"
+            },
+            {
+              "id": "k132",
+              "time": 27.2,
+              "value": 1,
+              "easing": "easeIn"
+            },
+            {
+              "id": "k133",
+              "time": 27.6,
+              "value": 0,
+              "easing": "linear"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "text-8",
+      "name": "Caption 8",
+      "visible": true,
+      "kind": "text",
+      "text": "annandigitallabs.com",
+      "size": 0.9,
+      "color": "#ffffff",
+      "weight": 700,
+      "transform": {
+        "position": {
+          "value": [
+            0,
+            5.7,
+            1
+          ],
+          "keyframes": []
+        },
+        "rotation": {
+          "value": [
+            0,
+            0,
+            0
+          ],
+          "keyframes": []
+        },
+        "scale": {
+          "value": [
+            1,
+            1,
+            1
+          ],
+          "keyframes": []
+        },
+        "opacity": {
+          "value": 0,
+          "keyframes": [
+            {
+              "id": "k134",
+              "time": 47.8,
+              "value": 0,
+              "easing": "easeOut"
+            },
+            {
+              "id": "k135",
+              "time": 48.2,
+              "value": 1,
+              "easing": "linear"
+            },
+            {
+              "id": "k136",
+              "time": 51.6,
+              "value": 1,
+              "easing": "easeIn"
+            },
+            {
+              "id": "k137",
+              "time": 52,
+              "value": 0,
+              "easing": "linear"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "text-9",
+      "name": "Caption 9",
+      "visible": true,
+      "kind": "text",
+      "text": "Turning ideas into powerful digital solutions",
+      "size": 0.5,
+      "color": "#7dd3fc",
+      "weight": 700,
+      "transform": {
+        "position": {
+          "value": [
+            0,
+            -5.8,
+            1
+          ],
+          "keyframes": []
+        },
+        "rotation": {
+          "value": [
+            0,
+            0,
+            0
+          ],
+          "keyframes": []
+        },
+        "scale": {
+          "value": [
+            1,
+            1,
+            1
+          ],
+          "keyframes": []
+        },
+        "opacity": {
+          "value": 0,
+          "keyframes": [
+            {
+              "id": "k138",
+              "time": 48.2,
+              "value": 0,
+              "easing": "easeOut"
+            },
+            {
+              "id": "k139",
+              "time": 48.6,
+              "value": 1,
+              "easing": "linear"
+            },
+            {
+              "id": "k140",
+              "time": 51.6,
+              "value": 1,
+              "easing": "easeIn"
+            },
+            {
+              "id": "k141",
+              "time": 52,
+              "value": 0,
+              "easing": "linear"
+            }
+          ]
+        }
+      }
+    }
+  ]
+}

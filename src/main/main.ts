@@ -56,10 +56,11 @@ const MAX_PROJECT_BYTES = 20 * 1024 * 1024;
 /** Background images are embedded in the project (as base64), so keep them modest. */
 const MAX_IMAGE_BYTES = 8 * 1024 * 1024;
 
+/** Files shipped in assets/ (next to the asar when packaged, see extraResource). */
+const ASSETS = app.isPackaged ? path.join(process.resourcesPath, 'assets') : path.join(app.getAppPath(), 'assets');
+
 /** The app icon: window title bar, taskbar and (when packaged) the executable. */
-const APP_ICON = app.isPackaged
-  ? path.join(process.resourcesPath, 'assets', 'icon.png')
-  : path.join(app.getAppPath(), 'assets', 'icon.png');
+const APP_ICON = path.join(ASSETS, 'icon.png');
 
 let libraryInstance: Library | null = null;
 /** The onboarding project library: files in the user's home folder, never in a synced OneDrive folder. */
@@ -69,6 +70,7 @@ function library(): Library {
   libraryInstance ??= new Library({
     indexFile: testDir ? path.join(testDir, 'projects.json') : path.join(app.getPath('userData'), 'projects.json'),
     folder: testDir ?? path.join(app.getPath('home'), 'Looit Projects'),
+    demoFile: path.join(ASSETS, 'demo.looit'),
     trash: (file) => shell.trashItem(file),
   });
   return libraryInstance;

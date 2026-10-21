@@ -5,13 +5,14 @@
 // what a file cannot say about itself: a stable id, a pin and recency. Losing
 // the index never loses a project; the files stay readable.
 
+import { createHash } from 'node:crypto';
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import { blankProject, newId, newProject } from '../engine/project';
 import { parseProject, ProjectFileError, serializeProject } from '../engine/schema';
 import type { LibraryEntry, LibrarySnapshot, OpenedLibraryProject } from '../shared/ipc';
 
-/** The demo project: the app's default blank project on the Electron site. */
+/** File name the bundled demo tour is copied to on first use. */
 export const DEMO_NAME = 'Demo project';
 
 export const MAX_PROJECT_BYTES = 20 * 1024 * 1024;
@@ -24,10 +25,14 @@ interface StoredEntry {
   path: string;
   pinned: boolean;
   updatedAt: number;
+  /** The one entry the onboarding screen's demo tile opens. */
+  demo?: boolean;
 }
 
 interface IndexFile {
   version: number;
+  /** Hash of the bundled tour last copied, so a new bundle replaces the old copy. */
+  demoVersion?: string;
   entries: StoredEntry[];
 }
 
@@ -72,6 +77,8 @@ export interface LibraryDeps {
   indexFile: string;
   /** Where new projects are created. */
   folder: string;
+  /** The demo tour shipped with the app (assets/demo.looit). */
+  demoFile: string;
   /** Moves a file to the recycle bin (electron's shell.trashItem). */
   trash(file: string): Promise<void>;
 }
@@ -160,12 +167,13 @@ export class Library {
     return this.run(async () => {
       const index = await this.load();
       const entries = await Promise.all(index.entries.map((e) => this.decorate(e)));
-      const demo = entries.find((e) => samePath(e.path, this.demoPath)) ?? null;
+      const demo = entries.find((e) => e.demo) ?? entries.find((e) => samePath(e.path, this.demoPath)) ?? null;
       // The demo is a normal project too, so it can be renamed, pinned or deleted.
       return { entries: sortEntries(entries), demo, folder: this.deps.folder };
     });
   }
 
+  /** Where the bundled tour is first copied to; it can be renamed afterwards. */
   get demoPath(): string {
     return path.join(this.deps.folder, `${DEMO_NAME}.looit`);
   }
@@ -194,30 +202,64 @@ export class Library {
   }
 
   /** The demo project, created on first use and reused after that (its edits persist). */
+  /**
+   * The demo tour shipped with the app. It is copied into the library on first
+   * use and then behaves like any project (edits persist, it can be renamed or
+   * deleted). A new bundled tour replaces the copy, so the tile always shows
+   * the tour this build ships with.
+   */
   async demo(): Promise<OpenedLibraryProject> {
     return this.run(async () => {
       const index = await this.load();
       await fs.mkdir(this.deps.folder, { recursive: true });
-      const target = this.demoPath;
-      let entry = index.entries.find((e) => samePath(e.path, target));
-      let text: string;
-      try {
-        text = await this.read(target);
-        parseProject(text); // a corrupt demo is rebuilt rather than offered
-      } catch {
-        const project = newProject();
-        project.name = DEMO_NAME;
-        text = serializeProject(project);
-        await this.write(target, project);
-      }
+      const bundle = await this.demoBundle();
+      let entry = index.entries.find((e) => e.demo) ?? index.entries.find((e) => samePath(e.path, this.demoPath));
       if (!entry) {
-        entry = { id: newId('project'), name: DEMO_NAME, path: target, pinned: false, updatedAt: 0 };
+        const target = path.join(this.deps.folder, uniqueFileName(DEMO_NAME, await this.takenNames()));
+        await this.writeText(target, bundle.text);
+        entry = { id: newId('project'), name: bundle.name, path: target, pinned: false, updatedAt: 0, demo: true };
         index.entries.push(entry);
+      } else {
+        entry.demo = true;
+      }
+      if (index.demoVersion !== bundle.version || !(await this.exists(entry.path))) {
+        await this.writeText(entry.path, bundle.text);
+        index.demoVersion = bundle.version;
+        entry.name = bundle.name;
       }
       entry.updatedAt = Date.now();
       await this.persist();
-      return { entry: await this.decorate(entry), text };
+      return { entry: await this.decorate(entry), text: await this.read(entry.path) };
     });
+  }
+
+  /** The bundled tour, with a hash so a new bundle is noticed. */
+  private async demoBundle(): Promise<{ text: string; version: string; name: string }> {
+    try {
+      const text = await this.read(this.deps.demoFile);
+      const project = parseProject(text);
+      return { text, version: createHash('sha256').update(text).digest('hex'), name: project.name };
+    } catch {
+      // No bundle (or a broken one): fall back to the default project.
+      const project = newProject();
+      project.name = DEMO_NAME;
+      const text = serializeProject(project);
+      return { text, version: 'built-in', name: DEMO_NAME };
+    }
+  }
+
+  private async exists(file: string): Promise<boolean> {
+    try {
+      return (await fs.stat(file)).isFile();
+    } catch {
+      return false;
+    }
+  }
+
+  private async writeText(file: string, text: string): Promise<void> {
+    const tmp = `${file}.tmp`;
+    await fs.writeFile(tmp, text, 'utf8');
+    await fs.rename(tmp, file);
   }
 
   async open(id: string): Promise<OpenedLibraryProject | null> {

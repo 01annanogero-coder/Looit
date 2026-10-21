@@ -37,7 +37,7 @@ The app opens on the project library, not in the editor.
 
 - **Create project** writes `%USERPROFILE%\Looit Projects\<name>.looit` and opens it. A new project is a **blank browser card** with a resting cursor: nothing loads until the user types an address in _Properties → Website Panel_. The folder is in the user's profile, deliberately outside any OneDrive-synced Documents folder.
 - **Continue with** opens a project from the list. `%APPDATA%\Looit\projects.json` only stores each project's id, name, pin and last-used time; the `.looit` files are the source of truth, and a project whose file was moved shows as _file missing_.
-- **Demo project** opens `%USERPROFILE%\Looit Projects\Demo project.looit`, created on first use; it is the ready-made project on `https://www.electronjs.org/`.
+- **Demo project** copies the tour bundled at `assets/demo.looit` (a finished 52-second video of `annandigitallabs.com` with captions) into `%USERPROFILE%\Looit Projects\Demo project.looit` on first use, then opens it. Edits to that copy persist; when a later build ships a different tour, the copy is replaced so the tile always shows the current demo.
 - Each project can be renamed (the file is renamed too, and the name inside it updated), pinned to the top, shared (saves a copy to a location of the user's choosing), shown in Explorer, or deleted (the file goes to the recycle bin). **Open a .looit file…** imports any project into the list.
 - **Every accepted change is written back** to the open project file about half a second after editing stops; the save indicator goes back to _Saved_ by itself. _Save as_ still copies the project somewhere else.
 - Development only: `LOOIT_LIBRARY_DIR=<folder>` points the library at a scratch folder (the end-to-end test uses it).

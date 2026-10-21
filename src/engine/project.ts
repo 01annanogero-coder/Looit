@@ -371,7 +371,7 @@ export function newTextObject(text = 'Your headline'): TextObject {
 /**
  * The starting point for a new video: one empty browser card facing the camera,
  * with a resting cursor and no animation. The user points the panel at a site
- * from its URL field; the demo project is the one that starts on electronjs.org.
+ * from its URL field; the demo project is a bundled, finished tour instead.
  */
 export function blankProject(): Project {
   const websiteId = newId('website');

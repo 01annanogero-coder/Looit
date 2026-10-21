@@ -157,6 +157,8 @@ export interface LibraryEntry {
   pinned: boolean;
   /** Epoch ms of the last open or save. */
   updatedAt: number;
+  /** The entry the demo tile opens (still a normal project otherwise). */
+  demo?: boolean;
   /** False when the file was moved or deleted outside Looit. */
   exists: boolean;
 }
@@ -165,7 +167,7 @@ export interface LibraryEntry {
 export interface LibrarySnapshot {
   /** Newest (and pinned) first; the demo project is not repeated here. */
   entries: LibraryEntry[];
-  /** The bundled electronjs.org demo project, created on first use. */
+  /** The bundled demo tour, copied into the library on first use. */
   demo: LibraryEntry | null;
   /** Folder new projects are created in. */
   folder: string;
@@ -241,7 +243,7 @@ export interface LooitApi {
     list(): Promise<LibrarySnapshot>;
     /** Creates a project in the library folder and returns it ready to edit. */
     create(name: string): Promise<OpenedLibraryProject>;
-    /** Opens the demo project (electronjs.org), creating it on first use. */
+    /** Opens the bundled demo tour, copying it into the library on first use. */
     demo(): Promise<OpenedLibraryProject>;
     /** Reads one library project. */
     open(id: string): Promise<OpenedLibraryProject | null>;

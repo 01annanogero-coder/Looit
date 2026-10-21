@@ -206,7 +206,7 @@ export function Home() {
             </span>
             <span>
               <strong>Demo project</strong>
-              <span className="muted">A ready-made project on electronjs.org</span>
+              <span className="muted">A finished tour of a real website, ready to edit</span>
             </span>
           </button>
         </section>
@@ -287,10 +287,8 @@ export function Home() {
             </ul>
           )}
 
-          {demo && (
-            <p className="muted home-demo-note">
-              Demo project: {demo.exists ? 'ready' : 'will be created when opened'} — electronjs.org
-            </p>
+          {demo && !demo.exists && (
+            <p className="muted home-demo-note">The demo tour will be copied into your projects when you open it.</p>
           )}
         </section>
       </main>
