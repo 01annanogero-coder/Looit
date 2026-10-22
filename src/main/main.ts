@@ -17,6 +17,7 @@ import { pathToFileURL } from 'node:url';
 import type {
   AiConnectionInfo,
   AiResponse,
+  AppInfo,
   ExportBeginOptions,
   PageInput,
   PreviewAdvance,
@@ -30,6 +31,7 @@ import { RendererRpc } from './ai/renderer-rpc';
 import { AiService, Studio } from './ai/service';
 import { aiAccessEnabled, setAiAccessEnabled } from './ai/settings';
 import { Library } from './library';
+import { createLogger, type Logger } from './log';
 import { runBridge } from './mcp/bridge';
 import { isAllowedSiteUrl, WebsiteHost } from './website';
 
@@ -50,6 +52,108 @@ function appendRenderingSwitches(): void {
 let editor: BrowserWindow | null = null;
 let website: WebsiteHost | null = null;
 let projectDirty = false;
+
+let loggerInstance: Logger | null = null;
+/** Crashes and unexpected errors, in a file support can ask the user for (Help → About Looit). */
+function log(): Logger {
+  loggerInstance ??= createLogger(path.join(app.getPath('userData'), 'logs', 'looit.log'));
+  return loggerInstance;
+}
+
+/** Saves the editor asks for while its window is closing: request id -> answer. */
+const pendingSaves = new Map<number, (ok: boolean) => void>();
+let saveRequestCounter = 0;
+
+/** Asks the editor window to write its project, and waits (a few seconds at most) for the answer. */
+function requestEditorSave(win: BrowserWindow): Promise<boolean> {
+  return new Promise((resolve) => {
+    const id = ++saveRequestCounter;
+    const timer = setTimeout(() => {
+      pendingSaves.delete(id);
+      resolve(false);
+    }, 15_000);
+    pendingSaves.set(id, (ok) => {
+      clearTimeout(timer);
+      pendingSaves.delete(id);
+      resolve(ok);
+    });
+    win.webContents.send('project:save-request', id);
+  });
+}
+
+let closeConfirmed = false;
+let confirmingClose = false;
+
+/**
+ * Development only: end-to-end tests answer the close dialog without a click.
+ * LOOIT_TEST_CLOSE_CHOICES=2,0 answers Cancel, then Save and close (0, 1, 2 = the buttons in order).
+ */
+function testCloseChoice(): number | null {
+  if (app.isPackaged || !process.env.LOOIT_TEST_CLOSE_CHOICES) return null;
+  const [first, ...rest] = process.env.LOOIT_TEST_CLOSE_CHOICES.split(',');
+  process.env.LOOIT_TEST_CLOSE_CHOICES = rest.join(',');
+  return Number(first);
+}
+
+/** Closing with unsaved changes: offer to save first, so a quick edit is never lost. */
+async function confirmClose(win: BrowserWindow): Promise<void> {
+  if (confirmingClose) return;
+  confirmingClose = true;
+  try {
+    const testChoice = testCloseChoice();
+    const { response } =
+      testChoice !== null
+        ? { response: testChoice }
+        : await dialog.showMessageBox(win, {
+            type: 'question',
+            buttons: ['Save and close', 'Close without saving', 'Cancel'],
+            defaultId: 0,
+            cancelId: 2,
+            title: 'Unsaved changes',
+            message: 'Save your changes before closing?',
+            detail: 'Your most recent edits have not been written to the project file yet.',
+          });
+    if (response === 2) return;
+    if (response === 0 && !(await requestEditorSave(win))) {
+      await dialog.showMessageBox(win, {
+        type: 'warning',
+        buttons: ['OK'],
+        title: 'Not saved',
+        message: 'Your project could not be saved, so Looit stayed open.',
+        detail: 'Try Save again from the File menu, or choose Close without saving.',
+      });
+      return;
+    }
+    closeConfirmed = true;
+    win.close();
+  } finally {
+    confirmingClose = false;
+  }
+}
+
+let crashDialogShown = false;
+/** Writes crashes and unexpected errors to the log file; the user sees one plain message per session. */
+function installCrashLogging(): void {
+  log().info(
+    `Looit ${app.getVersion()} starting (Electron ${process.versions.electron}, ${app.isPackaged ? 'packaged' : 'development'}${process.windowsStore ? ', Microsoft Store' : ''})`,
+  );
+  process.on('uncaughtException', (err) => {
+    log().error('Uncaught exception in the main process', err);
+    if (crashDialogShown || selfTestOut || !app.isReady()) return;
+    crashDialogShown = true;
+    dialog.showErrorBox(
+      'Looit ran into an unexpected problem',
+      `${err instanceof Error ? err.message : String(err)}\n\nDetails were saved to the Looit log (Help → About Looit → Open log folder).`,
+    );
+  });
+  process.on('unhandledRejection', (reason) => log().error('Unhandled promise rejection', reason));
+  app.on('render-process-gone', (_e, _contents, details) =>
+    log().info(`A page crashed: ${details.reason} (exit code ${details.exitCode})`),
+  );
+  app.on('child-process-gone', (_e, details) =>
+    log().info(`The ${details.type} process stopped: ${details.reason} (exit code ${details.exitCode})`),
+  );
+}
 /** Project paths the user picked in an open/save dialog; saving is only allowed to these. */
 const approvedProjectPaths = new Set<string>();
 const MAX_PROJECT_BYTES = 20 * 1024 * 1024;
@@ -393,6 +497,27 @@ function registerIpc(): void {
   on('project:dirty', (_ws, dirty: unknown) => {
     projectDirty = dirty === true;
   });
+  on('project:save-result', (_ws, id: unknown, ok: unknown) => {
+    if (typeof id === 'number') pendingSaves.get(id)?.(ok === true);
+  });
+
+  // ---- About and support (editor only) ----
+  handle(
+    'app:info',
+    (): AppInfo => ({
+      name: app.getName(),
+      version: app.getVersion(),
+      electron: process.versions.electron,
+      chrome: process.versions.chrome,
+      store: !!process.windowsStore,
+      logFolder: path.dirname(log().file),
+    }),
+  );
+  handle('app:show-logs', async () => {
+    const folder = path.dirname(log().file);
+    await fs.mkdir(folder, { recursive: true });
+    await shell.openPath(folder);
+  });
 
   // ---- The onboarding project library (editor only) ----
   handle('library:list', () => library().snapshot());
@@ -693,19 +818,13 @@ function createEditor(): void {
     console.error(`Editor renderer gone: ${details.reason} (exit ${details.exitCode})`);
     if (selfTestOut) app.exit(2);
   });
+  editor.on('unresponsive', () => log().info('The editor window stopped responding.'));
+  editor.on('responsive', () => log().info('The editor window is responding again.'));
 
   editor.on('close', (event) => {
-    if (!projectDirty || selfTestOut) return;
-    const choice = dialog.showMessageBoxSync(editor!, {
-      type: 'warning',
-      buttons: ['Close without saving', 'Cancel'],
-      defaultId: 1,
-      cancelId: 1,
-      title: 'Unsaved changes',
-      message: 'You have unsaved changes.',
-      detail: 'If you close now, your changes since the last save will be lost.',
-    });
-    if (choice === 1) event.preventDefault();
+    if (closeConfirmed || !projectDirty || selfTestOut) return;
+    event.preventDefault();
+    void confirmClose(editor!);
   });
 
   editor.on('closed', () => {
@@ -719,6 +838,23 @@ function createEditor(): void {
 }
 
 function startApp(): void {
+  // Two editors on the same project files would overwrite each other's saves, so a
+  // second launch only brings the first window forward. Development test runs
+  // (any LOOIT_* variable) use scratch folders and may run alongside it.
+  const testRun = !app.isPackaged && Object.keys(process.env).some((k) => k.startsWith('LOOIT_'));
+  if (!testRun) {
+    if (!app.requestSingleInstanceLock()) {
+      app.quit();
+      return;
+    }
+    app.on('second-instance', () => {
+      if (!editor) return;
+      if (editor.isMinimized()) editor.restore();
+      editor.show();
+      editor.focus();
+    });
+  }
+  installCrashLogging();
   appendRenderingSwitches();
   protocol.registerSchemesAsPrivileged([
     { scheme: 'looit-media', privileges: { standard: true, secure: true, stream: true, supportFetchAPI: true } },

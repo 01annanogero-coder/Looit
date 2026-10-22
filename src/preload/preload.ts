@@ -4,6 +4,21 @@
 import { contextBridge, ipcRenderer } from 'electron';
 import type { AiRequest, AiResponse, LooitApi, SiteFrame, SiteStatus } from '../shared/ipc';
 
+// The main process asks the editor to save when the window is closing with
+// unsaved changes; one handler answers, however often the UI re-registers it.
+let saveHandler: (() => Promise<boolean>) | null = null;
+ipcRenderer.on('project:save-request', (_e, id: number) => {
+  void (async () => {
+    let ok = false;
+    try {
+      ok = saveHandler ? await saveHandler() : false;
+    } catch {
+      ok = false;
+    }
+    ipcRenderer.send('project:save-result', id, ok);
+  })();
+});
+
 const api: LooitApi = {
   site: {
     sync: (target) => ipcRenderer.send('site:sync', target),
@@ -34,6 +49,13 @@ const api: LooitApi = {
     save: (text, path, name) => ipcRenderer.invoke('project:save', text, path, name),
     setDirty: (dirty) => ipcRenderer.send('project:dirty', dirty),
     pickImage: () => ipcRenderer.invoke('project:pick-image'),
+    onSaveRequest: (handler) => {
+      saveHandler = handler;
+    },
+  },
+  app: {
+    info: () => ipcRenderer.invoke('app:info'),
+    showLogs: () => ipcRenderer.invoke('app:show-logs'),
   },
   library: {
     list: () => ipcRenderer.invoke('library:list'),

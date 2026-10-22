@@ -392,6 +392,50 @@ textarea.text-input {
   overflow: hidden;
 }
 
+/* Full-screen preview: the 3D view fills the window, everything else is hidden. */
+.app.preview-mode {
+  grid-template-areas: 'view';
+  background: #000;
+}
+
+.app.preview-mode > :not(.viewport):not(.preview-hint) {
+  display: none;
+}
+
+.app.preview-mode .viewport {
+  background: #000;
+}
+
+.app.preview-mode .viewport-stage {
+  margin: 0;
+}
+
+.preview-hint {
+  position: fixed;
+  left: 50%;
+  bottom: 22px;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 12px;
+  border-radius: 999px;
+  border: 1px solid rgb(255 255 255 / 0.14);
+  background: rgb(8 10 18 / 0.72);
+  color: #dfe3f2;
+  font-size: 12px;
+  pointer-events: none;
+  z-index: 20;
+}
+
+.preview-hint kbd {
+  padding: 1px 6px;
+  border-radius: 5px;
+  border: 1px solid rgb(255 255 255 / 0.25);
+  background: rgb(255 255 255 / 0.08);
+  font: inherit;
+}
+
 .viewport-stage canvas {
   display: block;
   border-radius: 6px;

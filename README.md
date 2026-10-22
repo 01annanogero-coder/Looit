@@ -58,6 +58,7 @@ The app opens on the project library, not in the editor.
 - **Presets:** select an object or the camera, open the Animation tab and click a preset (Fade in/out, Fly in, Slide in, Pop in/out; camera: Zoom in/out, Push in, Pull out, Pan, Rise). It adds keyframes from the playhead for the chosen length, ending at the current values, so place the object first and add the entrance after.
 - **Environment:** in Scene settings, the background can be a solid colour, a gradient or an image (PNG, JPEG or WebP up to 8 MB, embedded in the project and cropped to fill the frame). A floor can be added under the panels: a soft reflection or a grid.
 - **Preview follows the timeline:** the website in the viewport shows its state at the playhead. Scrubbing back rebuilds the page and replays the cursor's clicks and scrolls up to that moment; playing advances the page's clock with the playhead.
+- **Preview (full screen):** the _Preview_ button plays the video from the start with the 3D view filling the screen and no editor chrome. It loops until you press **Esc** (or leave full screen). The window goes full screen when the browser allows it; otherwise the view still fills the window.
 - **Layout:** T / N hide the left and properties panels, drag panel edges to resize, Ctrl+Space maximizes the viewport. Sizes are remembered.
 - **All shortcuts:** Help → Keyboard shortcuts (F1).
 - **Projects** are saved as `.looit` files (JSON, validated on open). Exports stream straight to the chosen file.
@@ -105,6 +106,12 @@ Verified by `npm run selftest`: page time advances 33.3 ms per frame at 30 fps a
 
 ## MSIX and the Store
 
-`npm run make:msix` signs with a local dev certificate (`certs/`, git-ignored). To install that package locally, trust `certs/dev-cert.cer` once (Trusted People, Local Machine), then open the `.msix`.
+`npm run make:msix` builds the dev package: identity `Looit.Dev`, signed with a local certificate (`certs/`, git-ignored). To install it locally, turn on Developer Mode, trust `certs/dev-cert.cer` once (Trusted People, Local Machine), then open the `.msix`.
 
-For the Store, replace the package identity in `forge.config.mts` (`packageIdentity`, `publisher`) with the values from Partner Center (Product identity page). The Store signs the package, so you don't need to buy a code-signing certificate.
+`npm run make:msix:store` builds the package to upload: the identity comes from `store-identity.json` (copy `store-identity.example.json` and paste the values from Partner Center's Product identity page), and it is left unsigned because the Store signs it, so no code-signing certificate is needed. The script prints the identity that went into the package.
+
+The full list of what is left before submitting (identity, install test, listing, privacy policy, age rating) is in [docs/store-submission.md](docs/store-submission.md).
+
+## Support
+
+Help > About Looit shows the version and opens the log folder. The log (`logs/looit.log` in the app's data folder) records crashes and unexpected errors only, never project content, and is never sent anywhere. A second launch of the app focuses the open window instead of starting another editor.

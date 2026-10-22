@@ -42,6 +42,8 @@ interface EditorState {
   selectedKeys: KeyRef[];
   time: number;
   playing: boolean;
+  /** The 3D view fills the window and the animation loops (Preview). */
+  previewFullscreen: boolean;
   tool: Tool;
   gizmo: GizmoMode;
   exporting: boolean;
@@ -66,6 +68,7 @@ export const useEditor = create<EditorState>(() => ({
   selectedKeys: [],
   time: 0,
   playing: false,
+  previewFullscreen: false,
   tool: 'select',
   gizmo: 'translate',
   exporting: false,
@@ -184,6 +187,11 @@ export function markSaved(filePath: string): void {
 /** Shows the onboarding library or the editor. */
 export function setView(view: View): void {
   set({ view });
+}
+
+/** Enters or leaves the full-screen preview. */
+export function setPreviewFullscreen(on: boolean): void {
+  set({ previewFullscreen: on });
 }
 
 export function isDirty(s: EditorState = get()): boolean {

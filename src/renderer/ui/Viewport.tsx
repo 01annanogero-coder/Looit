@@ -260,14 +260,26 @@ export function Viewport({ readOnly = false }: { readOnly?: boolean }) {
       }
       if (s.playing) {
         const prev = s.time;
-        const next = Math.min(prev + dt, s.project.duration);
-        setEditor({ time: next });
-        // Advance the preview website's clock with the playhead (cursor clicks/scrolls included).
-        playbackTick(s.project, prev, next);
-        if (next >= s.project.duration) setPlaying(false);
+        const end = s.project.duration;
+        if (prev + dt >= end && s.previewFullscreen) {
+          // The preview loops: deliver the rest of the events, then start over.
+          playbackTick(s.project, prev, end);
+          setEditor({ time: 0 });
+        } else {
+          const next = Math.min(prev + dt, end);
+          setEditor({ time: next });
+          // Advance the preview website's clock with the playhead (cursor clicks/scrolls included).
+          playbackTick(s.project, prev, next);
+          if (next >= end) setPlaying(false);
+        }
       }
       const cur = getEditor();
-      view.sync(cur.project, cur.time, { selectedId: cur.selectedId, showHelpers: true });
+      // The full-screen preview shows the video only: no selection outline, no gizmo.
+      const editing = !cur.previewFullscreen;
+      view.sync(cur.project, cur.time, {
+        selectedId: editing ? cur.selectedId : null,
+        showHelpers: editing,
+      });
 
       // Attach the gizmo to the selected object (not while dragging, so its
       // reference transform stays stable). Screen-space text has no scene
@@ -275,7 +287,7 @@ export function Viewport({ readOnly = false }: { readOnly?: boolean }) {
       const selected = cur.project.objects.find((o) => o.id === cur.selectedId);
       const pinnedText = selected?.kind === 'text' && selected.space === 'screen';
       const target =
-        cur.tool === 'select' && !cur.playing && cur.selectedId && !pinnedText && !useModal.getState().kind
+        editing && cur.tool === 'select' && !cur.playing && cur.selectedId && !pinnedText && !useModal.getState().kind
           ? view.object3D(cur.selectedId)
           : null;
       if (!dragging && controls.object !== (target ?? undefined)) {

@@ -21,7 +21,8 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "selftest": "node scripts/selftest.mjs",
-    "make:msix": "node scripts/make-msix.mjs"
+    "make:msix": "node scripts/make-msix.mjs",
+    "make:msix:store": "node scripts/make-msix.mjs --store"
   },
   "devDependencies": {
     "@electron-forge/cli": "^8.0.1",

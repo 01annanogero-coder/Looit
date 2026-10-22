@@ -1,8 +1,9 @@
-import { Cloud, CloudOff, Film, LayoutGrid, Play, Square } from 'lucide-react';
+import { Cloud, CloudOff, Film, LayoutGrid, Play } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
-import { addText, deleteSelection, goHome, newFile, openFile, runExport, saveFile } from '../actions';
+import { addText, deleteSelection, goHome, newFile, openFile, openPreview, runExport, saveFile } from '../actions';
+import type { AppInfo } from '../../shared/ipc';
 import { SHORTCUTS, SHOW_SHORTCUTS_EVENT } from '../shortcuts';
-import { isDirty, redo, setPlaying, setTime, undo, useEditor } from '../store';
+import { isDirty, redo, undo, useEditor } from '../store';
 import { AiConnectDialog } from './AiConnect';
 
 /** The app icon, emitted by Vite from the project's assets folder. */
@@ -84,9 +85,45 @@ function ShortcutSheet({ onClose }: { onClose(): void }) {
   );
 }
 
+/** Help → About Looit: the version support asks for, and the log file. */
+function AboutDialog({ onClose }: { onClose(): void }) {
+  const [info, setInfo] = useState<AppInfo | null>(null);
+  useEffect(() => {
+    void window.looit.app.info().then(setInfo);
+  }, []);
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        e.stopPropagation();
+        onClose();
+      }
+    };
+    window.addEventListener('keydown', onKey, true);
+    return () => window.removeEventListener('keydown', onKey, true);
+  }, [onClose]);
+  return (
+    <div className="overlay" onPointerDown={(e) => e.target === e.currentTarget && onClose()}>
+      <div className="overlay-card">
+        <strong>Looit</strong>
+        <div>Version {info?.version ?? '…'}</div>
+        <div className="muted">Turn real websites into 3D animated explainer videos.</div>
+        {info && (
+          <div className="muted">
+            {info.store ? 'Microsoft Store install' : 'Direct install'} · Electron {info.electron} · Chromium{' '}
+            {info.chrome}
+          </div>
+        )}
+        <button onClick={() => void window.looit.app.showLogs()}>Open log folder</button>
+        <button onClick={onClose}>Close</button>
+      </div>
+    </div>
+  );
+}
+
 export function TopBar() {
   const [showKeys, setShowKeys] = useState(false);
   const [showAi, setShowAi] = useState(false);
+  const [showAbout, setShowAbout] = useState(false);
   useEffect(() => {
     const open = () => setShowKeys(true);
     window.addEventListener(SHOW_SHORTCUTS_EVENT, open);
@@ -97,7 +134,6 @@ export function TopBar() {
   const hasFile = useEditor((s) => s.filePath !== null);
   const canUndo = useEditor((s) => s.past.length > 0);
   const canRedo = useEditor((s) => s.future.length > 0);
-  const playing = useEditor((s) => s.playing);
   const exporting = useEditor((s) => s.exporting);
 
   return (
@@ -132,6 +168,7 @@ export function TopBar() {
           items={[
             { label: 'Keyboard shortcuts', shortcut: 'F1', action: () => setShowKeys(true) },
             { label: 'Connect an AI app…', action: () => setShowAi(true) },
+            { label: 'About Looit', action: () => setShowAbout(true) },
           ]}
         />
       </nav>
@@ -146,17 +183,8 @@ export function TopBar() {
         <button onClick={() => void goHome()} title="Back to your projects" disabled={exporting}>
           <LayoutGrid size={14} /> Projects
         </button>
-        <button
-          onClick={() => {
-            if (playing) setPlaying(false);
-            else {
-              setTime(0);
-              setPlaying(true);
-            }
-          }}
-          disabled={exporting}
-        >
-          {playing ? <Square size={14} /> : <Play size={14} />} {playing ? 'Stop' : 'Preview'}
+        <button onClick={openPreview} title="Play the video full screen, in a loop (Esc to exit)" disabled={exporting}>
+          <Play size={14} /> Preview
         </button>
         <button className="primary" onClick={() => void runExport()} disabled={exporting}>
           <Film size={14} /> Export Video
@@ -164,6 +192,7 @@ export function TopBar() {
       </div>
       {showKeys && <ShortcutSheet onClose={() => setShowKeys(false)} />}
       {showAi && <AiConnectDialog onClose={() => setShowAi(false)} />}
+      {showAbout && <AboutDialog onClose={() => setShowAbout(false)} />}
     </header>
   );
 }

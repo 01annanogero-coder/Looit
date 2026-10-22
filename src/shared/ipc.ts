@@ -100,6 +100,18 @@ export interface AiConnectionInfo {
   development: boolean;
 }
 
+/** Help → About Looit: what support needs to know about this install. */
+export interface AppInfo {
+  name: string;
+  version: string;
+  electron: string;
+  chrome: string;
+  /** Installed from the Microsoft Store (an MSIX package). */
+  store: boolean;
+  /** Folder holding the log file support may ask for. */
+  logFolder: string;
+}
+
 /** "Scroll to here": the scroll distance since Interact mode began, or why it can't be measured. */
 export type ScrollSinceInteract = { deltaY: number } | { error: string };
 
@@ -237,6 +249,16 @@ export interface LooitApi {
     setDirty(dirty: boolean): void;
     /** Asks for a PNG, JPEG or WebP background image; returns it as a data: URL, or null if cancelled. */
     pickImage(): Promise<string | null>;
+    /**
+     * How the editor writes its project when the window is closing with unsaved
+     * changes. Resolves true when nothing unsaved is left.
+     */
+    onSaveRequest(handler: () => Promise<boolean>): void;
+  };
+  app: {
+    info(): Promise<AppInfo>;
+    /** Opens the folder with the log file in Explorer. */
+    showLogs(): Promise<void>;
   };
   library: {
     /** The projects shown on the onboarding screen. */

@@ -94,6 +94,9 @@ function handle(e: KeyboardEvent): void {
   const key = e.key.toLowerCase();
   const s = getEditor();
 
+  // The full-screen preview only listens for Esc (handled by the preview itself).
+  if (s.previewFullscreen) return;
+
   if (ctrl && key === 's') return void (e.preventDefault(), saveFile(e.shiftKey));
   if (ctrl && key === 'o') return void (e.preventDefault(), openFile());
   if (ctrl && key === 'n') return void (e.preventDefault(), newFile());

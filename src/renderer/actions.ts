@@ -39,6 +39,7 @@ import {
   selectKeys,
   setEditor,
   setPlaying,
+  setPreviewFullscreen,
   setStatus,
   setTime,
   setView,
@@ -50,6 +51,33 @@ import { currentRenderer, interactTarget, siteTexture, view } from './viewport/r
 function errorText(err: unknown): string {
   const msg = err instanceof Error ? err.message : String(err);
   return msg.replace(/^Error invoking remote method '[^']+': (Error: )?/, '');
+}
+
+// ---- Preview --------------------------------------------------------------------
+
+/**
+ * Plays the project from the start with the 3D view filling the screen. The
+ * animation loops until Esc (or leaving full screen). Fullscreen is
+ * best-effort: without a user gesture the browser refuses it, and the viewport
+ * still fills the window.
+ */
+export function openPreview(): void {
+  if (getEditor().exporting) return;
+  setPlaying(false);
+  setTime(0);
+  // Interact mode would let the page run on its own clock instead of the timeline.
+  setEditor({ tool: 'select' });
+  setPreviewFullscreen(true);
+  setPlaying(true);
+  void document.documentElement.requestFullscreen?.().catch(() => undefined);
+}
+
+/** Leaves the full-screen preview and stops playback. */
+export function closePreview(): void {
+  if (!getEditor().previewFullscreen) return;
+  setPlaying(false);
+  setPreviewFullscreen(false);
+  if (document.fullscreenElement) void document.exitFullscreen?.().catch(() => undefined);
 }
 
 // ---- Files ----------------------------------------------------------------------
@@ -120,6 +148,16 @@ export function savePending(): Promise<boolean> {
   const next = saveChain.then(run, run);
   saveChain = next.catch(() => undefined);
   return next;
+}
+
+/**
+ * The window is closing with unsaved changes and the user chose "Save and close".
+ * Resolves true only when nothing unsaved is left (a project without a file asks where to save).
+ */
+export async function saveBeforeClose(): Promise<boolean> {
+  if (!getEditor().filePath) await saveFile(true);
+  else await savePending();
+  return !isDirty(getEditor());
 }
 
 /** Back to the project library, saving the open project first. */

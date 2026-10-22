@@ -1,4 +1,4 @@
-import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import os from 'node:os';
 import path from 'node:path';
@@ -11,9 +11,9 @@ import { FuseV1Options, FuseVersion } from '@electron/fuses';
 
 const require = createRequire(import.meta.url);
 
-// Development identity. Before Store submission these are replaced with
-// the values Partner Center assigns (Package/Identity/Name and Publisher).
-const MSIX_IDENTITY = {
+// Development identity: what `npm run make:msix` uses, matching the self-signed
+// certificate in certs/. It can be installed next to the Store version.
+const DEV_IDENTITY = {
   packageIdentity: 'Looit.Dev',
   publisher: 'CN=Looit Dev',
   publisherDisplayName: 'Looit',
@@ -22,6 +22,41 @@ const MSIX_IDENTITY = {
   packageMinOSVersion: '10.0.19041.0',
   packageMaxOSVersionTested: '10.0.26100.0',
 };
+
+/**
+ * The Store identity: copy store-identity.example.json to store-identity.json and
+ * paste the values from Partner Center (Product management > Product identity).
+ * They must match character for character. Without that file, or when
+ * LOOIT_DEV_IDENTITY=1 (the dev build), the development identity is used.
+ */
+function loadIdentity(): typeof DEV_IDENTITY {
+  const file = path.resolve('store-identity.json');
+  if (process.env.LOOIT_DEV_IDENTITY === '1' || !existsSync(file)) return DEV_IDENTITY;
+  const given = JSON.parse(readFileSync(file, 'utf8')) as Record<string, unknown>;
+  const text = (key: string, required: boolean): string | undefined => {
+    const value = given[key];
+    if (typeof value === 'string' && value.trim()) return value.trim();
+    if (required) throw new Error(`store-identity.json: "${key}" is missing (copy it from Partner Center).`);
+    return undefined;
+  };
+  const publisher = text('publisher', true)!;
+  if (!/^CN=\S/.test(publisher)) {
+    throw new Error(
+      'store-identity.json: "publisher" must start with CN= (for example CN=XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX).',
+    );
+  }
+  const displayName = text('packageDisplayName', false) ?? DEV_IDENTITY.packageDisplayName;
+  return {
+    ...DEV_IDENTITY,
+    packageIdentity: text('packageIdentity', true)!,
+    publisher,
+    publisherDisplayName: text('publisherDisplayName', true)!,
+    packageDisplayName: displayName,
+    appDisplayName: displayName,
+  };
+}
+
+const MSIX_IDENTITY = loadIdentity();
 
 /**
  * The standard MSIX manifest plus an app execution alias, so other programs can
@@ -99,6 +134,8 @@ const config: ForgeConfig = {
       packageAssets: path.join('build', 'msix'),
       windowsKitVersion: '10.0.26100.0',
       manifestVariables: MSIX_IDENTITY,
+      // The Store build (npm run make:msix:store) is left unsigned: the Microsoft Store signs it.
+      sign: process.env.LOOIT_UNSIGNED !== '1',
     }),
   ],
   plugins: [

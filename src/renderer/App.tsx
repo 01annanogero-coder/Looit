@@ -1,7 +1,7 @@
 import { Layers, MousePointer2, PanelLeft, PanelRight, Type } from 'lucide-react';
 import { useEffect } from 'react';
 import { cursorFor } from '../engine/project';
-import { addText, cancelExport, useExportProgress } from './actions';
+import { addText, cancelExport, closePreview, saveBeforeClose, useExportProgress } from './actions';
 import { useAutosave } from './autosave';
 import { resize, toggleLeft, toggleRight, toggleTimeline, useLayout } from './layout';
 import { useShortcuts } from './shortcuts';
@@ -17,6 +17,10 @@ import { Viewport } from './ui/Viewport';
 
 /** Keeps the main process informed so closing with unsaved changes can warn. */
 function useDirtySync(): void {
+  // When the user closes the window and chooses "Save and close", the main process asks us to save.
+  useEffect(() => {
+    window.looit.project.onSaveRequest(saveBeforeClose);
+  }, []);
   useEffect(() => {
     let last = false;
     return useEditor.subscribe((s) => {
@@ -27,6 +31,29 @@ function useDirtySync(): void {
       }
     });
   }, []);
+}
+
+/** Esc leaves the preview; so does the browser dropping out of full screen. */
+function usePreviewKeys(active: boolean): void {
+  useEffect(() => {
+    if (!active) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== 'Escape') return;
+      e.preventDefault();
+      e.stopPropagation();
+      closePreview();
+    };
+    // Chromium exits full screen on its own (Esc, F11); follow it.
+    const onFullscreenChange = () => {
+      if (!document.fullscreenElement) closePreview();
+    };
+    window.addEventListener('keydown', onKey, true);
+    document.addEventListener('fullscreenchange', onFullscreenChange);
+    return () => {
+      window.removeEventListener('keydown', onKey, true);
+      document.removeEventListener('fullscreenchange', onFullscreenChange);
+    };
+  }, [active]);
 }
 
 function LeftRail() {
@@ -108,6 +135,8 @@ export function App() {
   useAutosave();
   const layout = useLayout();
   const view = useEditor((s) => s.view);
+  const preview = useEditor((s) => s.previewFullscreen);
+  usePreviewKeys(preview);
   const left = layout.leftOpen && !layout.maximized;
   const right = layout.rightOpen && !layout.maximized;
   const timeline = layout.timelineOpen && !layout.maximized;
@@ -116,10 +145,14 @@ export function App() {
 
   return (
     <div
-      className="app"
+      className={`app${preview ? ' preview-mode' : ''}`}
       style={{
-        gridTemplateColumns: `64px ${left ? layout.leftWidth : 0}px minmax(300px, 1fr) ${right ? layout.rightWidth : 0}px`,
-        gridTemplateRows: `48px minmax(160px, 1fr) ${timeline ? layout.timelineHeight : TIMELINE_HEADER_HEIGHT}px 24px`,
+        gridTemplateColumns: preview
+          ? '1fr'
+          : `64px ${left ? layout.leftWidth : 0}px minmax(300px, 1fr) ${right ? layout.rightWidth : 0}px`,
+        gridTemplateRows: preview
+          ? '1fr'
+          : `48px minmax(160px, 1fr) ${timeline ? layout.timelineHeight : TIMELINE_HEADER_HEIGHT}px 24px`,
       }}
     >
       <TopBar />
@@ -137,7 +170,13 @@ export function App() {
       ) : (
         <div className="area-tree collapsed" />
       )}
-      <Viewport />
+      <Viewport readOnly={preview} />
+      {preview && (
+        <div className="preview-hint">
+          <span>Preview · looping</span>
+          <kbd>Esc</kbd> to exit
+        </div>
+      )}
       {right ? (
         <aside className="right">
           <Splitter
