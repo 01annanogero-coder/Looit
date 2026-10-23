@@ -36,7 +36,8 @@ capabilities, alias and assets. Test that one on a clean Windows 10/11 machine o
 2. In an **administrator** PowerShell, trust the dev certificate (this fixes error `0x800B0109`):
    `Import-Certificate -FilePath certs\dev-cert.cer -CertStoreLocation Cert:\LocalMachine\TrustedPeople`
 3. `Add-AppxPackage out\make\msix\x64\Looit-win32-x64-<version>.msix` (run `npm run make:msix` first).
-4. Start Looit from the Start menu and check: it opens, a second click on the icon only focuses the open window,
+4. Close any development copy of Looit first (`npm start`): it holds the same single-instance lock, so the installed app
+   would hand off to it and quit within two seconds. Then start Looit from the Start menu and check: it opens, a second click on the icon only focuses the open window,
    Help > About Looit shows the version, create a project, edit, close it quickly (the Save and close prompt appears),
    export a short video, and `Looit --mcp` works from the execution alias.
 5. Remove the test install afterwards: `Get-AppxPackage Looit.Dev | Remove-AppxPackage`, and remove the certificate
